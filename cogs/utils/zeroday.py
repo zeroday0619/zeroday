@@ -20,7 +20,7 @@ class zeroday(Cog):
             )
             .add_field(
                 name="ZERODAY BOT Invite Link",
-                value="[Invite Link](https://discordapp.com/api/oauth2/authorize?client_id=604882921958146063&permissions=8&redirect_uri=http%3A%2F%2F45.76.216.136%3A5000%2Fcallback&scope=bot)"
+                value="[Invite Link](https://discord.com/api/oauth2/authorize?client_id=604882921958146063&permissions=37080384&redirect_uri=http%3A%2F%2F45.76.216.136%3A5000%2Fcallback&scope=bot)"
             )
         )
         await ctx.send(
