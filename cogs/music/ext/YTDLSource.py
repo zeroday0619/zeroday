@@ -1,30 +1,16 @@
 import discord
 import asyncio
 import youtube_dl
-import functools
-import itertools
 
-from core import bot
+from discord import PCMVolumeTransformer
+from youtube_dl import YoutubeDL
+from functools import partial
+
+from .performance import run_in_threadpool
+from .option import ytdl_format_options
 from .option import EmbedSaftySearch
 from .option import adult_filter
-from .option import BlockedContent
 
-from discord import FFmpegPCMAudio
-from discord import PCMVolumeTransformer
-
-from discord.ext import commands
-from discord.ext.commands import Bot
-from discord.ext.commands import Cog
-from discord.ext.commands import Context
-from discord.ext.commands import CommandError
-from pathlib import Path
-
-from asyncio import BaseEventLoop
-from youtube_dl import YoutubeDL
-
-from .option import ffmpeg_options, ffmpeg_options_a
-from .option import ytdl_format_options
-from .performance import run_in_threadpool
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 ytdl = YoutubeDL(ytdl_format_options)
@@ -51,24 +37,7 @@ class YTDLSource(PCMVolumeTransformer):
         return self.__getattribute__(item)
 
     @classmethod
-    async def create_playlist(cls, ctx, search: str, *, loop, download=True):
-        loop = loop or asyncio.get_event_loop()
-        data = await ytdl.extract_info(url=search, download=download)
-
-        songs = []
-        for data in data['entries']:
-            await ctx.send("**{}**가 재생목록에 추가되었습니다.".format(str(data['title'])), delete_after=5)
-
-            if download:
-                source = ytdl.prepare_filename(data)
-                songs.append(cls(discord.FFmpegPCMAudio(source), data=data, requester=ctx.author))
-            else:
-                songs.append({'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title']})
-        return songs
-
-    @classmethod
-    async def Search(cls, ctx, search: str, *, loop, download=False, msg=True):
-        loop = loop or asyncio.get_event_loop()
+    async def Search(cls, ctx, search: str, *, download=False, msg=True):
         data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
         if 'entries' in data:
             data = data['entries'][0]
@@ -94,7 +63,8 @@ class YTDLSource(PCMVolumeTransformer):
         loop = loop or asyncio.get_event_loop()
         requester = data['requester']
 
-        data = await run_in_threadpool(lambda: ytdl.extract_info(url=data['webpage_url'], download=False))
+        to_run = partial(ytdl.extract_info, url=data['webpage_url'], download=False)
+        data = await loop.run_in_executor(None, to_run)
 
         return cls(discord.FFmpegPCMAudio(data['url']), data=data, requester=requester)
 

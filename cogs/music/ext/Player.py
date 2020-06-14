@@ -70,13 +70,11 @@ class Player:
                 ctx = await self.bot.get_context(self.np)
                 ctx.author = source.requester
                 search = source.web_url
-                source_repeat = await YTDLSource.Search(ctx, search, loop=self.bot.loop, download=False, msg=False)
+                source_repeat = await YTDLSource.Search(ctx, search, download=False, msg=False)
                 if self.repeat == "current":
                     self.queue._queue.appendleft(source_repeat)
                 else:
                     await self.queue.put(source_repeat)
-
-            # Make sure the FFmpeg process is cleaned up.
 
             try:
                 await self.np.delete()
