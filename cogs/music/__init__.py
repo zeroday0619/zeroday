@@ -24,7 +24,7 @@ class music(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.players = {}
-        self.buildVer = "20200612 RC 1347"
+        self.buildVer = "20200616 RC 0843"
         self.verstring = "Ver"
 
     async def cleanup(self, guild):
@@ -164,7 +164,7 @@ class music(Cog):
 
         if await adult_filter(search=str(search)) == 1:
             embed_one = EmbedSaftySearch(data=str(search))
-            await ctx.send(embed=embed_one, delete_after=10)
+            await ctx.send(embed=embed_one)
         else:
             vc = ctx.voice_client
             if not vc:
@@ -173,7 +173,7 @@ class music(Cog):
             source = await YTDLSource.Search(ctx, search, download=True)
             if await adult_filter(search=source.title) == 1:
                 embed_two = EmbedSaftySearch(data=str(search))
-                await ctx.send(embed=embed_two, delete_after=10)
+                await ctx.send(embed=embed_two)
                 await self.cleanup(ctx.guild)
             await player.queue.put(source)
 
@@ -258,7 +258,7 @@ class music(Cog):
         if player.queue.empty():
             return await ctx.send(embed=embed_queued)
 
-        upcoming = list(itertools.islice(player.queue._queue, 0, 5))
+        upcoming = list(itertools.islice(player.queue._queue, 0, 50))
 
         fmt = '\n'.join(f'**`{_["title"]}`**' for _ in upcoming)
         embed_queue = (
@@ -267,7 +267,7 @@ class music(Cog):
                 description=fmt,
                 color=discord.Color.blurple()
             )
-            .add_field(name=self.verstring, value=self.buildVer)
+                .add_field(name=self.verstring, value=self.buildVer)
         )
 
         await ctx.send(embed=embed_queue)
@@ -294,7 +294,7 @@ class music(Cog):
                 description=f'requested by `{vc.source.requester}`',
                 color=discord.Color.blurple()
             )
-            .add_field(name=self.verstring, value=self.buildVer)
+                .add_field(name=self.verstring, value=self.buildVer)
         )
         player.np = await ctx.send(embed=embed_now_playing)
 
@@ -321,7 +321,7 @@ class music(Cog):
                 description=f'```{ctx.author}: Set the volume to {vol}%```',
                 color=discord.Color.blurple()
             )
-            .add_field(name=self.verstring, value=self.buildVer)
+                .add_field(name=self.verstring, value=self.buildVer)
         )
 
         await ctx.send(embed=embed_now_playing, delete_after=10)

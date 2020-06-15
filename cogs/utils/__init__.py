@@ -4,6 +4,7 @@ from .Events import Events
 from .Status import Status
 from .zeroday import zeroday
 
+
 def setup(bot: Bot):
     bot.remove_command("help")
     bot.add_cog(zeroday(bot))
