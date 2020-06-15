@@ -1,6 +1,5 @@
 import asyncio
 import discord
-import uvloop
 from async_timeout import timeout
 from .YTDLSource import YTDLSource
 
@@ -48,17 +47,18 @@ class Player:
 
             source.volume = self.volume
             self.current = source
+            print(self.current.thumbnail)
 
             embed = (
                 discord.Embed(
                     title='Now playing', description='```css\n{0.title}\n```'.format(source),
                     color=discord.Color.blurple()
                 )
-                    .add_field(name='Duration', value=self.current.duration)
-                    .add_field(name='Requested by', value=self.current.requester)
-                    .add_field(name='Uploader', value='[{0.uploader}]({0.uploader_url})'.format(self.current))
-                    .add_field(name='URL', value='[Click]({0.web_url})'.format(self.current))
-                    .set_thumbnail(url=self.current.thumbnail)
+                .add_field(name='Duration', value=self.current.duration)
+                .add_field(name='Requested by', value=self.current.requester)
+                .add_field(name='Uploader', value='[{0.uploader}]({0.uploader_url})'.format(self.current))
+                .add_field(name='URL', value='[Click]({0.web_url})'.format(self.current))
+                .set_thumbnail(url=self.current.thumbnail)
             )
 
             self._guild.voice_client.play(source, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))

@@ -53,6 +53,7 @@ class YTDLSource(PCMVolumeTransformer):
         # =============================================================================================
         if download:
             source = await run_in_threadpool(lambda: ytdl.prepare_filename(data))
+            print(source)
         else:
             return {'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title']}
 
