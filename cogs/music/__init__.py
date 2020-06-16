@@ -259,15 +259,14 @@ class music(Cog):
             return await ctx.send(embed=embed_queued)
 
         upcoming = list(itertools.islice(player.queue._queue, 0, 50))
-
-        fmt = '\n'.join(f'**`{_["title"]}`**' for _ in upcoming)
+        fmt = '\n'.join(f'```css\n{_["title"]}\n```' for _ in upcoming)
         embed_queue = (
             discord.Embed(
-                title=f'```css\nUpcoming - Next *{len(upcoming)}*\n```',
+                title=f'Upcoming - Next **{len(upcoming)}**',
                 description=fmt,
                 color=discord.Color.blurple()
             )
-                .add_field(name=self.verstring, value=self.buildVer)
+            .add_field(name=self.verstring, value=self.buildVer)
         )
 
         await ctx.send(embed=embed_queue)
