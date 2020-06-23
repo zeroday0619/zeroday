@@ -296,13 +296,9 @@ class CTF(commands.Cog):
             _md5_hash = hashlib.md5()
             _hex = _md5_hash.update(arg.encode())
             _hex = _md5_hash.hexdigest()
-            hex_embed = (
-                discord.Embed(title="hash", description="말 그대로 해시!")
-                .add_field(name="md5", value=_hex)
-            )
-            await context.send(
-                context.author.mention, 
-                embed=hex_embed
+            await self.encryptout(
+                context, "text >> md5",
+                _hex
             )
         except Exception as Ex:
             await context.send("Error: "+str(Ex))
@@ -312,13 +308,9 @@ class CTF(commands.Cog):
         """sha1"""
         try:
             sha_one = hashlib.sha1(arg.encode()).hexdigest()
-            hex_embed = (
-                discord.Embed(title="hash", description="말 그대로 해시!")
-                .add_field(name="sha1", value=sha_one)
-            )
-            await context.send(
-                context.author.mention, 
-                embed=hex_embed
+            await self.encryptout(
+                context, "text >> sha1",
+                sha_one
             )
         except Exception as Ex:
             await context.send("Error: "+str(Ex))
@@ -328,13 +320,9 @@ class CTF(commands.Cog):
         """sha224"""
         try:
             sha224 = hashlib.sha224(arg.encode()).hexdigest()
-            hex_embed = (
-                discord.Embed(title="hash", description="말 그대로 해시!")
-                .add_field(name="sha224", value=sha224)
-            )
-            await context.send(
-                context.author.mention, 
-                embed=hex_embed
+            await self.encryptout(
+                context, "text >> sha224",
+                sha224
             )
         except Exception as Ex:
             await context.send("Error: "+str(Ex))
@@ -345,13 +333,9 @@ class CTF(commands.Cog):
         try:
             sha256 = hashlib.sha256(arg.encode()).hexdigest()
 
-            hex_embed = (
-                discord.Embed(title="hash", description="말 그대로 해시!")
-                .add_field(name="sha256", value=sha256)
-            )
-            await context.send(
-                context.author.mention, 
-                embed=hex_embed
+            await self.encryptout(
+                context, "text >> sha256",
+                sha256
             )
         except Exception as Ex:
             await context.send("Error: "+str(Ex))
@@ -361,30 +345,23 @@ class CTF(commands.Cog):
         """sha384"""
         try:
             sha384 = hashlib.sha384(arg.encode()).hexdigest()
-            hex_embed = (
-                discord.Embed(title="hash", description="말 그대로 해시!")
-                .add_field(name="sha384", value=sha384)
-            )
-            await context.send(
-                context.author.mention, 
-                embed=hex_embed
+            await self.encryptout(
+                context, "text >> sha384",
+                sha384
             )
         except Exception as Ex:
             await context.send("Error: "+str(Ex))
-
+    
     @crypto.command(name="sha512")
     async def _sha512(self, context,*, arg):
         """sha512"""
         try:
             sha512 = hashlib.sha512(arg.encode()).hexdigest()
 
-            hex_embed = (
-                discord.Embed(title="hash", description="말 그대로 해시!")
-                .add_field(name="sha512", value=sha512)
+            await self.encryptout(
+                context, "text >> sha512",
+                sha512
             )
-            await context.send(
-                context.author.mention, 
-                embed=hex_embed
-            )
+
         except Exception as Ex:
             await context.send("Error: "+str(Ex))
