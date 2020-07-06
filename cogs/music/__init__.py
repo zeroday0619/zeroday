@@ -24,7 +24,7 @@ class music(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.players = {}
-        self.buildVer = "20200616 RC 0843"
+        self.buildVer = "3.0"
         self.verstring = "Ver"
 
     async def cleanup(self, guild):
@@ -131,16 +131,7 @@ class music(Cog):
             except asyncio.TimeoutError as TError2:
                 await ctx.send("Error: {}".format(str(TError2)))
                 raise VoiceConnectionError("Connecting to channel: <{}> timed out".format(str(channel)))
-
-        embed_join = (
-            discord.Embed(
-                title="Music",
-                description='```css\nConnected to **{}**\n```'.format(str(channel)),
-                color=discord.Color.blurple()
-            )
-                .add_field(name=self.verstring, value=self.buildVer)
-        )
-        await ctx.send(embed=embed_join, delete_after=10)
+        await ctx.send('```css\nConnected to **{}**\n```'.format(str(channel)), delete_after=10)
 
     @_music.command(name="loop", aliases=['lp'])
     async def _loop(self, ctx, mode: str):
@@ -174,7 +165,7 @@ class music(Cog):
             if not vc:
                 await ctx.invoke(self.connect_)
             player = self.get_player(ctx)
-            source = await YTDLSource.Search(ctx, search, download=True)
+            source = await YTDLSource.Search(ctx, search, download=False)
             if await adult_filter(search=source.title) == 1:
                 embed_two = EmbedSaftySearch(data=str(search))
                 await ctx.send(embed=embed_two)
@@ -199,7 +190,7 @@ class music(Cog):
                 await ctx.send(embed=embed_two)
             else:
                 player = self.get_player(ctx)
-                source = await YTDLSource.create_playlist(ctx, search, download=True)
+                source = await YTDLSource.create_playlist(ctx, search, download=False)
                 for ix in source:
                     await player.queue.put(ix)
 
@@ -260,16 +251,7 @@ class music(Cog):
             return
 
         vc.stop()
-        embed_skip = (
-            discord.Embed(
-                title="Music",
-                description=f'```css\n**{ctx.author}** : 스킵!.\n```',
-                color=discord.Color.blurple()
-            )
-                .add_field(name=self.verstring, value=self.buildVer)
-        )
-
-        await ctx.send(embed=embed_skip, delete_after=5)
+        await ctx.send(f'```css\n**{ctx.author}** : 스킵!.\n```', delete_after=5)
 
     @_music.command(name="remove", aliases=["rm"])
     async def _remove(self, ctx, index: int):
