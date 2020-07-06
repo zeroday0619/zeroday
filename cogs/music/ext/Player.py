@@ -3,7 +3,6 @@ import discord
 import random
 import itertools
 from async_timeout import timeout
-from discord.ext import commands
 from .YTDLSource import YTDLSource
 
 
@@ -66,7 +65,8 @@ class Player:
 
             if not isinstance(source, YTDLSource):
                 try:
-                    source = await YTDLSource.regather_stream(data=source, loop=self.bot.loop)
+                    print("streaming")
+                    source = await YTDLSource.regather_stream(source, download=False)
                 except Exception as e:
                     await self._channel.send("Error: {}".format(e))
                     continue
