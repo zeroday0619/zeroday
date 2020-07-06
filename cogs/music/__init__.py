@@ -81,21 +81,25 @@ class music(Cog):
         """
         ```markdown
         Music
-        -----------------------------------------------
+        --------------------------------------------------
         |   Type   | aliases |      description
-        |:--------:|:-------:|-------------------------
+        |:--------:|:-------:|----------------------------
         |  connect |   join  |보이스 채널에 들어갑니다
-        |   play   |   None  |재생 [Search]
+        |   play   |   None  |유튜브 (재생) [Search]
+        | play_list|   ml    |유튜브 (재생) playlist [Search]
+        |   stop   |  None   |종료
         |   loop   |    lp   |반복 재생
         |   pause  |   None  |일시 중지
         |  resume  |   None  |다시 재생
         |   skip   |  None   |건너 뛰기
+        |  remove  |   rm    |playlist 제거
         |  queue   |    q    |재생 목록
+        | shuffle  |   sff   |shuffle
         | current  |    np   |재생중인 컨텐츠 정보 보기
         |  volume  |   vol   |사운드 크기 조절
         |   stop   |  None   |종료
-
         ```
+
 		"""
         if ctx.invoked_subcommand is None:
             help_cmd = self.bot.get_command('help')
@@ -177,6 +181,28 @@ class music(Cog):
                 await self.cleanup(ctx.guild)
             await player.queue.put(source)
 
+    @_music.command(name='play_list', aliases=['ml'])
+    async def create_playlist_play(self, ctx, *, search: str):
+        """재생"""
+        await ctx.trigger_typing()
+
+        if await adult_filter(search=str(search)) == 1:
+            embed_one = EmbedSaftySearch(data=str(search))
+            await ctx.send(embed=embed_one)
+        else:
+            vc = ctx.voice_client
+            if not vc:
+                await ctx.invoke(self.connect_)
+
+            if await adult_filter(search=search) == 1:
+                embed_two = EmbedSaftySearch(data=str(search))
+                await ctx.send(embed=embed_two)
+            else:
+                player = self.get_player(ctx)
+                source = await YTDLSource.create_playlist(ctx, search, download=True)
+                for ix in source:
+                    await player.queue.put(ix)
+
     @_music.command(name='pause')
     async def pause_(self, ctx):
         """일시중지"""
@@ -244,6 +270,24 @@ class music(Cog):
         )
 
         await ctx.send(embed=embed_skip, delete_after=5)
+
+    @_music.command(name="remove", aliases=["rm"])
+    async def _remove(self, ctx, index: int):
+        player = self.get_player(ctx)
+        if len(player.queue._queue) == 0:
+            return await ctx.send("Empty queue", delete_after=10)
+
+        player.queue.remove(index - 1)
+        await ctx.send("Success delete song", delete_after=10)
+
+    @_music.command(name="shuffle", aliases=["sff"])
+    async def _shuffle(self, ctx):
+        player = self.get_player(ctx)
+        if len(player.queue._queue) == 0:
+            return await ctx.send("Empty queue", delete_after=10)
+
+        player.queue.shuffle()
+        await ctx.send("Success")
 
     @_music.command(name='queue', aliases=['q', 'playlist'])
     async def queue_info(self, ctx):

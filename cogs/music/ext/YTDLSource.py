@@ -37,6 +37,25 @@ class YTDLSource(PCMVolumeTransformer):
         return self.__getattribute__(item)
 
     @classmethod
+    async def create_playlist(cls, ctx, search: str, *, download=True, msg=True):
+        data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
+        songs = []
+        for data in data['entries']:
+            if await adult_filter(search=str(data['title'])) == 1:
+                embed_two = EmbedSaftySearch(data=str(data['title']))
+                await ctx.send(embed=embed_two)
+            else:
+                if msg:
+                    await ctx.send("**{}**가 재생목록에 추가되었습니다.".format(str(data['title'])), delete_after=15)
+
+                if download:
+                    source = await run_in_threadpool(lambda: ytdl.prepare_filename(data))
+                    songs.append(cls(discord.FFmpegPCMAudio(source=source, executable="ffmpeg", options="-async 1 -ab 720k -vcodec flac -threads 16"), data=data, requester=ctx.author))
+                else:
+                    songs.append({'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title']})
+        return songs
+
+    @classmethod
     async def Search(cls, ctx, search: str, *, download=False, msg=True):
         data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
         if 'entries' in data:
