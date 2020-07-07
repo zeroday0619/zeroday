@@ -68,7 +68,6 @@ class music(Cog):
 
     def get_player(self, ctx):
         """
-
         :rtype: object
         """
         try:
