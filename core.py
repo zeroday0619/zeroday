@@ -5,7 +5,7 @@ from itertools import cycle
 status = cycle(
     [        
         '!help',
-        '20200612 RC 1347'
+        'Ver 3.1'
     ]
 )
 
@@ -15,4 +15,4 @@ class Bot(AutoShardedBot):
         super().__init__(*args, **kwargs)
 
 
-bot = Bot(command_prefix=config['command_prefix'], description=config['description'])
+bot = Bot(command_prefix=config['command_prefix'], description=config['description'], case_insensitive=True)

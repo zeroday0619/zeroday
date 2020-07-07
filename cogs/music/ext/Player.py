@@ -63,14 +63,6 @@ class Player:
                     return self.destroy(self._guild)
                 return
 
-            if not isinstance(source, YTDLSource):
-                try:
-                    print("streaming")
-                    source = await YTDLSource.regather_stream(source, download=False)
-                except Exception as e:
-                    await self._channel.send("Error: {}".format(e))
-                    continue
-
             source.volume = self.volume
             self.current = source
             print(self.current.thumbnail)
