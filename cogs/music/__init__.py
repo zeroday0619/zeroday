@@ -26,7 +26,7 @@ class music(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.players = {}
-        self.buildVer = "3.0"
+        self.buildVer = "3.1"
         self.verstring = "Ver"
 
     async def cleanup(self, guild):
