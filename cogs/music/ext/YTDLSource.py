@@ -43,9 +43,6 @@ class YTDLSource(PCMVolumeTransformer):
 
     @classmethod
     async def search_source(cls, ctx, search: str, *, download=False):
-        """비 활성화"""
-        global data
-
         channel = ctx.channel
         cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
         info = await run_in_threadpool(lambda :ytdl.extract_info(cls.search_query, download=download, process=False))
@@ -85,13 +82,14 @@ class YTDLSource(PCMVolumeTransformer):
         else:
             if m.content.isdigit() == True:
                 sel = int(m.content)
+                print(sel)
                 if 0 < sel <= 10:
                     for key, value in info.items():
                         if key == 'entries':
                             """data = value[sel - 1]"""
                             VId = value[sel - 1]['id']
                             VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-                            data = await run_in_threadpool(lambda :ytdl.extract_info(VUrl, download=False))
+                            data = await run_in_threadpool(lambda : ytdl.extract_info(VUrl, download=False))
                     rtrn = cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
                 else:
                     rtrn = 'sel_invalid'
@@ -138,29 +136,35 @@ class YTDLSource(PCMVolumeTransformer):
         if download:
             source = await run_in_threadpool(lambda: ytdl.prepare_filename(data))
         else:
-            print("streaming")
             return cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
 
         return cls(discord.FFmpegPCMAudio(source=source, executable="ffmpeg", options="-async 1 -ab 720k -vcodec flac -threads 16"), data=data, requester=ctx.author)
 
     @classmethod
-    async def regather_stream(cls, ctx, data, *, download=False):
+    async def regather_stream(cls, ctx, *, download=False):
         data = await run_in_threadpool(lambda : ytdl.extract_info(url=data['webpage_url'], download=download))
         return cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
 
     @staticmethod
     def parse_duration(duration: int):
-        minutes, seconds = divmod(duration, 60)
-        hours, minutes = divmod(minutes, 60)
-        days, hours = divmod(hours, 24)
+        if duration > 0:
+            minutes, seconds = divmod(duration, 60)
+            hours, minutes = divmod(minutes, 60)
+            days, hours = divmod(hours, 24)
 
-        duration = []
-        if days > 0:
-            duration.append('{} days'.format(days))
-        if hours > 0:
-            duration.append('{} hours'.format(hours))
-        if minutes > 0:
-            duration.append('{} minutes'.format(minutes))
-        if seconds > 0:
-            duration.append('{} seconds'.format(seconds))
-        return ', '.join(duration)
+            duration = []
+            if days > 0:
+                duration.append('{} days'.format(days))
+            if hours > 0:
+                duration.append('{} hours'.format(hours))
+            if minutes > 0:
+                duration.append('{} minutes'.format(minutes))
+            if seconds > 0:
+                duration.append('{} seconds'.format(seconds))
+            
+            value = ', '.join(duration)
+        
+        elif duration == 0:
+            value = "LIVE BATA"
+        
+        return value

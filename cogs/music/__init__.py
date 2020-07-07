@@ -16,6 +16,8 @@ from .ext.YTDLSource import YTDLSource
 from .ext.Player import Player
 from .ext.option import embed_ERROR, embed_queued, embed_value, InvalidVoiceChannel, VoiceConnectionError
 
+class YTDLError(Exception):
+    pass
 
 class music(Cog):
     """뮤직 모듈"""
@@ -87,6 +89,7 @@ class music(Cog):
         |  connect |   join  |보이스 채널에 들어갑니다
         |   play   |   None  |유튜브 (재생) [Search]
         | play_list|   ml    |유튜브 (재생) playlist [Search]
+        | search   |   None  |유튜브 검색 (재생) [Search]
         |   stop   |  None   |종료
         |   loop   |    lp   |반복 재생
         |   pause  |   None  |일시 중지
@@ -193,6 +196,32 @@ class music(Cog):
                 source = await YTDLSource.create_playlist(ctx, search, download=False)
                 for ix in source:
                     await player.queue.put(ix)
+    
+    @_music.command(name='search')
+    async def _search(self, ctx: commands.Context, *, search: str):
+        async with ctx.typing():
+            try:
+                source = await YTDLSource.search_source(ctx, search, download=False)
+            except YTDLError as e:
+                await ctx.send(f"ERROR: {str(e)}")
+            else:
+                if source == 'sel_invalid':
+                    await ctx.send('Invalid selection')
+                elif source == 'cancel':
+                    await ctx.send('cancel')
+                elif source == 'timeout':
+                    await ctx.send('Timeout')
+                else:
+                    if await adult_filter(search=search) == 1:
+                        embed_two = EmbedSaftySearch(data=str(search))
+                        await ctx.send(embed=embed_two)
+                    else:
+                        vc = ctx.voice_client
+                        if not vc:
+                            await ctx.invoke(self.connect_)
+                        player = self.get_player(ctx)
+                        await player.queue.put(source)
+
 
     @_music.command(name='pause')
     async def pause_(self, ctx):
@@ -251,7 +280,7 @@ class music(Cog):
             return
 
         vc.stop()
-        await ctx.send(f'```css\n**{ctx.author}** : 스킵!.\n```', delete_after=5)
+        await ctx.send(f'```css\n{ctx.author} : 스킵!.\n```', delete_after=5)
 
     @_music.command(name="remove", aliases=["rm"])
     async def _remove(self, ctx, index: int):
