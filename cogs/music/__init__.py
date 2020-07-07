@@ -343,8 +343,8 @@ class music(Cog):
             pass
         embed_now_playing = (
             discord.Embed(
-                title=f'```css\n**Now Playing:** {vc.source.title}```',
-                description=f'requested by `{vc.source.requester}`',
+                title=f'Now Playing: ```{vc.source.title}```',
+                description=f'requested by @{vc.source.requester}',
                 color=discord.Color.blurple()
             )
                 .add_field(name=self.verstring, value=self.buildVer)
