@@ -2,8 +2,9 @@ import asyncio
 import discord
 import traceback
 import itertools
+import re
 import sys
-
+from validator_collection import checkers
 from discord.ext import commands
 from discord.ext.commands import Bot
 from discord.ext.commands import Cog
@@ -159,6 +160,7 @@ class music(Cog):
     @_music.command(name='play', aliases=['music', 'p'])
     async def play_(self, ctx, *, search: str):
         """재생"""
+        
         await ctx.trigger_typing()
 
         if await adult_filter(search=str(search)) == 1:
@@ -169,7 +171,13 @@ class music(Cog):
             if not vc:
                 await ctx.invoke(self.connect_)
             player = self.get_player(ctx)
-            source = await YTDLSource.Search(ctx, search, download=False)
+            if checkers.is_url(search):
+                source = await YTDLSource.Search(ctx, search, download=False)
+            else:
+                search_text = search
+                serc = search_text.replace(":", "")
+                source = await YTDLSource.Search(ctx, serc, download=False)
+
             if await adult_filter(search=source.title) == 1:
                 embed_two = EmbedSaftySearch(data=str(search))
                 await ctx.send(embed=embed_two)
