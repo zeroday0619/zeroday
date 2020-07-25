@@ -39,7 +39,7 @@ class SafetySearch:
 
         mo = await run_in_threadpool(lambda: db.database.find_one({"filter_string": search}))
         try:
-            if not mo:
+            if mo != None:
                 check = mo['filter_string']
                 if check == search:
                     print("DB 조회\n" + self.safty_msg)
@@ -49,7 +49,7 @@ class SafetySearch:
                     return 2
             else:
                 mx = await run_in_threadpool(lambda: db.database.find_one({"green": search}))
-                if mx is None:
+                if mx == None:
                     resp = await self.requests(data)
                     if resp['adult'] == '1':
                         print("API 사용\n" + self.safty_msg)
