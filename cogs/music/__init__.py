@@ -16,8 +16,10 @@ from .ext.YTDLSource import YTDLSource
 from .ext.Player import Player
 from .ext.option import embed_ERROR, embed_queued, embed_value, InvalidVoiceChannel, VoiceConnectionError
 
+
 class YTDLError(Exception):
     pass
+
 
 class music(Cog):
     """뮤직 모듈"""
