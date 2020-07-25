@@ -43,61 +43,70 @@ class YTDLSource(PCMVolumeTransformer):
 
     @classmethod
     async def search_source(cls, ctx, search: str, *, download=False):
-        channel = ctx.channel
-        cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
-        info = await run_in_threadpool(lambda :ytdl.extract_info(cls.search_query, download=download, process=False))
-
-        cls.search = {}
-        cls.search['title'] = f'Search result for:\n**{search}**'
-        cls.search['type'] = 'rich'
-        cls.search['color'] = 7506394
-        cls.search['author'] = {
-            'name': f'{ctx.author.name}',
-            'url': f'{ctx.author.avatar_url}',
-            'icon_url': f'{ctx.author.avatar_url}'
-        }
-
-        lst = []
-
-        for e in info['entries']:
-            VId = e.get('id')
-            VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-            lst.append(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
-
-        lst.append('\n**Type a number to make a choice, Type `cancel` to exit**')
-        cls.search["description"] = "\n".join(lst)
-
-        em = discord.Embed.from_dict(cls.search)
-        await ctx.send(embed=em, delete_after=45.0)
-
-        def check(msg):
-            return msg.content.isdigit() == True and msg.channel == channel or msg.content == 'cancel' or msg.content == 'Cancel'
-
-        try:
-            m = await ctx.bot.wait_for('message', check=check, timeout=45.0)
-
-        except asyncio.TimeoutError:
-            rtrn = 'timeout'
-
+        if await adult_filter(str(search)) == 1:
+            embed_two = EmbedSaftySearch(str(search))
+            await ctx.send(embed=embed_two)
         else:
-            if m.content.isdigit() == True:
-                sel = int(m.content)
-                print(sel)
-                if 0 < sel <= 10:
-                    for key, value in info.items():
-                        if key == 'entries':
-                            """data = value[sel - 1]"""
-                            VId = value[sel - 1]['id']
-                            VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-                            data = await run_in_threadpool(lambda : ytdl.extract_info(VUrl, download=False))
-                    rtrn = cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
+            channel = ctx.channel
+            cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
+            info = await run_in_threadpool(lambda :ytdl.extract_info(cls.search_query, download=download, process=False))
+
+            cls.search = {}
+            cls.search['title'] = f'Search result for:\n**{search}**'
+            cls.search['type'] = 'rich'
+            cls.search['color'] = 7506394
+            cls.search['author'] = {
+                'name': f'{ctx.author.name}',
+                'url': f'{ctx.author.avatar_url}',
+                'icon_url': f'{ctx.author.avatar_url}'
+            }
+
+            lst = []
+
+            for e in info['entries']:
+                VId = e.get('id')
+                VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
+                lst.append(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
+
+            lst.append('\n**Type a number to make a choice, Type `cancel` to exit**')
+            cls.search["description"] = "\n".join(lst)
+
+            em = discord.Embed.from_dict(cls.search)
+            await ctx.send(embed=em, delete_after=45.0)
+
+            def check(msg):
+                return msg.content.isdigit() == True and msg.channel == channel or msg.content == 'cancel' or msg.content == 'Cancel'
+
+            try:
+                m = await ctx.bot.wait_for('message', check=check, timeout=45.0)
+
+            except asyncio.TimeoutError:
+                rtrn = 'timeout'
+
+            else:
+                if m.content.isdigit() == True:
+                    sel = int(m.content)
+                    print(sel)
+                    if 0 < sel <= 10:
+                        for key, value in info.items():
+                            if key == 'entries':
+                                """data = value[sel - 1]"""
+                                VId = value[sel - 1]['id']
+                                VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
+                                data = await run_in_threadpool(lambda : ytdl.extract_info(VUrl, download=False))
+                        if await adult_filter(str(data['title'])) == 1:
+                            embed_two = EmbedSaftySearch(str(data['title']))
+                            await ctx.send(embed=embed_two)
+                            rtrn = 'cancel'
+                        else:
+                            rtrn = cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
+                    else:
+                        rtrn = 'sel_invalid'
+                elif m.content == 'cancel':
+                    rtrn = 'cancel'
                 else:
                     rtrn = 'sel_invalid'
-            elif m.content == 'cancel':
-                rtrn = 'cancel'
-            else:
-                rtrn = 'sel_invalid'
-        return rtrn
+            return rtrn
 
     @classmethod
     async def create_playlist(cls, ctx, search: str, *, download=True, msg=True):
@@ -120,7 +129,7 @@ class YTDLSource(PCMVolumeTransformer):
 
     @classmethod
     async def Search(cls, ctx, search: str, *, download=False, msg=True):
-        data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
+        data = await run_in_threadpool(lambda: ytdl.extract_info(url=str(search), download=download))
         if 'entries' in data:
             data = data['entries'][0]
 
