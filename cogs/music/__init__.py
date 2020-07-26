@@ -210,7 +210,13 @@ class music(Cog):
     async def _search(self, ctx: commands.Context, *, search: str):
         async with ctx.typing():
             try:
-                source = await YTDLSource.search_source(ctx, search, download=False)
+                if checkers.is_url(search):
+                    source = await YTDLSource.search_source(ctx, search, download=False)
+                else:
+                    sr = search
+                    sear = sr.replace(":", "")
+                    source = await YTDLSource.search_source(ctx, sear, download=False)
+
             except YTDLError as e:
                 await ctx.send(f"ERROR: {str(e)}")
             else:

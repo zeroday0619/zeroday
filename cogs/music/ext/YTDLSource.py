@@ -62,13 +62,14 @@ class YTDLSource(PCMVolumeTransformer):
             }
 
             lst = []
+            _lst = lst.append
 
             for e in info['entries']:
                 VId = e.get('id')
                 VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-                lst.append(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
+                _lst(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
 
-            lst.append('\n**Type a number to make a choice, Type `cancel` to exit**')
+            _lst('\n**Type a number to make a choice, Type `cancel` to exit**')
             cls.search["description"] = "\n".join(lst)
 
             em = discord.Embed.from_dict(cls.search)
@@ -86,7 +87,6 @@ class YTDLSource(PCMVolumeTransformer):
             else:
                 if m.content.isdigit() == True:
                     sel = int(m.content)
-                    print(sel)
                     if 0 < sel <= 10:
                         for key, value in info.items():
                             if key == 'entries':
@@ -94,6 +94,7 @@ class YTDLSource(PCMVolumeTransformer):
                                 VId = value[sel - 1]['id']
                                 VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
                                 data = await run_in_threadpool(lambda : ytdl.extract_info(VUrl, download=False))
+    
                         if await adult_filter(str(data['title'])) == 1:
                             embed_two = EmbedSaftySearch(str(data['title']))
                             await ctx.send(embed=embed_two)
@@ -112,6 +113,7 @@ class YTDLSource(PCMVolumeTransformer):
     async def create_playlist(cls, ctx, search: str, *, download=True, msg=True):
         data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
         songs = []
+        song = songs.append
         for data in data['entries']:
             if await adult_filter(search=str(data['title'])) == 1:
                 embed_two = EmbedSaftySearch(data=str(data['title']))
@@ -122,9 +124,9 @@ class YTDLSource(PCMVolumeTransformer):
 
                 if download:
                     source = await run_in_threadpool(lambda: ytdl.prepare_filename(data))
-                    songs.append(cls(discord.FFmpegPCMAudio(source=source), data=data, requester=ctx.author))
+                    song(cls(discord.FFmpegPCMAudio(source=source), data=data, requester=ctx.author))
                 else:
-                    songs.append(cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author))
+                    song(cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author))
         return songs
 
     @classmethod
@@ -162,14 +164,15 @@ class YTDLSource(PCMVolumeTransformer):
             days, hours = divmod(hours, 24)
 
             duration = []
+            _duration = duration.append
             if days > 0:
-                duration.append('{} days'.format(days))
+                _duration('{} days'.format(days))
             if hours > 0:
-                duration.append('{} hours'.format(hours))
+                _duration('{} hours'.format(hours))
             if minutes > 0:
-                duration.append('{} minutes'.format(minutes))
+                _duration('{} minutes'.format(minutes))
             if seconds > 0:
-                duration.append('{} seconds'.format(seconds))
+                _duration('{} seconds'.format(seconds))
             
             value = ', '.join(duration)
         
