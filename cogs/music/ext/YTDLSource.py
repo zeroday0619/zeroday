@@ -177,6 +177,5 @@ class YTDLSource(PCMVolumeTransformer):
             value = ', '.join(duration)
         
         elif duration == 0:
-            value = "LIVE BATA"
-        
+            value = "LIVE BATA"        
         return value

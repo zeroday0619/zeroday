@@ -22,4 +22,4 @@ def create_config():
 
 
 with open('config.json', 'r', encoding='utf-8') as _config:
-    config = json.load(_config)
+    config: dict = json.load(_config)

@@ -3,6 +3,7 @@ from .CTF import CTF
 from .Events import Events
 from .Status import Status
 from .zeroday import zeroday
+from .weather import Weather
 
 
 def setup(bot: Bot):
