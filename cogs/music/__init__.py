@@ -116,6 +116,7 @@ class music(Cog):
         if not channel:
             try:
                 channel = ctx.author.voice.channel
+            
             except AttributeError as r2:
                 await ctx.send("Error: {}".format(str(r2)))
                 raise InvalidVoiceChannel(

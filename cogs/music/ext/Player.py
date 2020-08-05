@@ -88,11 +88,18 @@ class Player:
                 ctx = await self.bot.get_context(self.np)
                 ctx.author = source.requester
                 search = source.web_url
-                source_repeat = await YTDLSource.Search(ctx, search, download=False, msg=False)
+
+                try:
+                    source_repeat = await YTDLSource.Search(ctx, search, download=False, msg=False)    
+                except Exception as e:
+                    await self._channel.send(f'There was an error procecsing your song.\n ```css\n[{e}]\n```')
+                    continue
+                
                 if self.repeat == "current":
                     self.queue._queue.appendleft(source_repeat)
                 else:
                     await self.queue.put(source_repeat)
+
 
             try:
                 await self.np.delete()
