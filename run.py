@@ -1,23 +1,27 @@
 from websockets.exceptions import ConnectionClosedError
+
 try:
     from core import *
     from Utils.load_extension import LoadExtension, ReloadExtension, AsyncLoadExtension
     from Utils.discord_presense_task import change_status
 
-    token = config['Token']
+    token = config["Token"]
 
     async_ext = ["cogs.utils", "cogs.music"]
     _ext = ["Utils.discord_presense_task"]
     reload_ext = ["cogs.utils", "cogs.music", "Utils.discord_presense_task"]
 
-
     @bot.event
     async def on_ready():
-        print("-------------------------------------------------------------------------------")
-        print(f'[*] Logged is as [{bot.user.name}]')
-        print(f'[*] CID: {str(bot.user.id)}')
-        print(f'[*] zeroday0619 | Copyright (C) 2020 zeroday0619')
-        print("-------------------------------------------------------------------------------")
+        print(
+            "-------------------------------------------------------------------------------"
+        )
+        print(f"[*] Logged is as [{bot.user.name}]")
+        print(f"[*] CID: {str(bot.user.id)}")
+        print(f"[*] zeroday0619 | Copyright (C) 2020 zeroday0619")
+        print(
+            "-------------------------------------------------------------------------------"
+        )
         print(f'[*] Completed! running the "zeroday" framework')
         try:
             await change_status.start()
