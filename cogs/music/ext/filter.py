@@ -14,13 +14,13 @@ class SafetySearch:
         self.safty_msg = "해당 검색어는 Safety Search 에 의해 사용하실수 없습니다."
 
         # Mongo DB Credential
-        self.MongoDB_URL = config['mongodb_url']
-        self.MongoDB_PORT = config['mongodb_port']
+        self.MongoDB_URL = config["mongodb_url"]
+        self.MongoDB_PORT = config["mongodb_port"]
 
         # NAVER API Authentication
         self.headers = {
-            "X-Naver-Client-Id": config['X-Naver-Client-Id'],
-            "X-Naver-Client-Secret": config['X-Naver-Client-Secret']
+            "X-Naver-Client-Id": config["X-Naver-Client-Id"],
+            "X-Naver-Client-Secret": config["X-Naver-Client-Secret"],
         }
 
     async def requests(self, data):
@@ -30,17 +30,19 @@ class SafetySearch:
         return result
 
     async def adult_filter(self, search: str):
-        data = {
-            "query": search
-        }
-        client = await run_in_threadpool(lambda: pymongo.MongoClient(self.MongoDB_URL, self.MongoDB_PORT))
-        db = client['adult_filter']
-        collection = db['database']
+        data = {"query": search}
+        client = await run_in_threadpool(
+            lambda: pymongo.MongoClient(self.MongoDB_URL, self.MongoDB_PORT)
+        )
+        db = client["adult_filter"]
+        collection = db["database"]
 
-        mo = await run_in_threadpool(lambda: db.database.find_one({"filter_string": search}))
+        mo = await run_in_threadpool(
+            lambda: db.database.find_one({"filter_string": search})
+        )
         try:
             if mo != None:
-                check = mo['filter_string']
+                check = mo["filter_string"]
                 if check == search:
                     print("DB 조회\n" + self.safty_msg)
                     return 1
@@ -48,25 +50,19 @@ class SafetySearch:
                     print("DB 조회\n" + "System Error")
                     return 2
             else:
-                mx = await run_in_threadpool(lambda: db.database.find_one({"green": search}))
+                mx = await run_in_threadpool(
+                    lambda: db.database.find_one({"green": search})
+                )
                 if mx == None:
                     resp = await self.requests(data)
-                    if resp['adult'] == '1':
+                    if resp["adult"] == "1":
                         print("API 사용\n" + self.safty_msg)
-                        query = [
-                            {
-                                "filter_string": search
-                            }
-                        ]
+                        query = [{"filter_string": search}]
                         await run_in_threadpool(lambda: collection.insert_many(query))
                         return 1
-                    elif resp['adult'] == '0':
+                    elif resp["adult"] == "0":
                         print("API 사용\n정상")
-                        query2 = [
-                            {
-                                "green": search
-                            }
-                        ]
+                        query2 = [{"green": search}]
                         await run_in_threadpool(lambda: collection.insert_many(query2))
                         return search
                     else:

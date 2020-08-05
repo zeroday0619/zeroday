@@ -15,7 +15,13 @@ from .ext.performance import run_in_threadpool
 from .ext.filter import safe
 from .ext.YTDLSource import YTDLSource
 from .ext.Player import Player
-from .ext.option import embed_ERROR, embed_queued, embed_value, InvalidVoiceChannel, VoiceConnectionError
+from .ext.option import (
+    embed_ERROR,
+    embed_queued,
+    embed_value,
+    InvalidVoiceChannel,
+    VoiceConnectionError,
+)
 
 
 class YTDLError(Exception):
@@ -24,7 +30,8 @@ class YTDLError(Exception):
 
 class music(Cog):
     """뮤직 모듈"""
-    __slots__ = ('bot', 'players')
+
+    __slots__ = ("bot", "players")
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -64,10 +71,14 @@ class music(Cog):
                 pass
 
         elif isinstance(error, InvalidVoiceChannel):
-            await ctx.send("Voice Channel 연결중 Error 가 발생하였습니다\n 자신이 Voice Channel에 접속되어 있는 지 확인 바랍니다.")
+            await ctx.send(
+                "Voice Channel 연결중 Error 가 발생하였습니다\n 자신이 Voice Channel에 접속되어 있는 지 확인 바랍니다."
+            )
 
-        print('Ignoring exception in command {}'.format(ctx.command), file=sys.stderr)
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        print("Ignoring exception in command {}".format(ctx.command), file=sys.stderr)
+        traceback.print_exception(
+            type(error), error, error.__traceback__, file=sys.stderr
+        )
 
     def get_player(self, ctx):
         """
@@ -80,7 +91,7 @@ class music(Cog):
             self.players[ctx.guild.id] = player
         return player
 
-    @commands.group(name="music", aliases=['m'])
+    @commands.group(name="music", aliases=["m"])
     async def _music(self, ctx):
         """
         ```markdown
@@ -107,20 +118,21 @@ class music(Cog):
 
 		"""
         if ctx.invoked_subcommand is None:
-            help_cmd = self.bot.get_command('help')
-            await ctx.invoke(help_cmd, 'music')
+            help_cmd = self.bot.get_command("help")
+            await ctx.invoke(help_cmd, "music")
 
-    @_music.command(name='connect', aliases=['join', 'j'])
+    @_music.command(name="connect", aliases=["join", "j"])
     async def connect_(self, ctx, *, channel: discord.VoiceChannel = None):
         """보이스 채널에 들어갑니다"""
         if not channel:
             try:
                 channel = ctx.author.voice.channel
-            
+
             except AttributeError as r2:
                 await ctx.send("Error: {}".format(str(r2)))
                 raise InvalidVoiceChannel(
-                    "Voice channel에 연결하지 못하였습니다.\n 유효한 Voice Channel과 자신이 Voice Channel에 들어와 있는지 확인바랍니다.")
+                    "Voice channel에 연결하지 못하였습니다.\n 유효한 Voice Channel과 자신이 Voice Channel에 들어와 있는지 확인바랍니다."
+                )
         vc = ctx.voice_client
 
         if vc:
@@ -130,16 +142,22 @@ class music(Cog):
                 await vc.move_to(channel)
             except asyncio.TimeoutError as TError:
                 await ctx.send("Error: {}".format(str(TError)))
-                raise VoiceConnectionError("Moving to channel: <{}> timed out".format(str(channel)))
+                raise VoiceConnectionError(
+                    "Moving to channel: <{}> timed out".format(str(channel))
+                )
         else:
             try:
                 await channel.connect()
             except asyncio.TimeoutError as TError2:
                 await ctx.send("Error: {}".format(str(TError2)))
-                raise VoiceConnectionError("Connecting to channel: <{}> timed out".format(str(channel)))
-        await ctx.send('```css\nConnected to **{}**\n```'.format(str(channel)), delete_after=10)
+                raise VoiceConnectionError(
+                    "Connecting to channel: <{}> timed out".format(str(channel))
+                )
+        await ctx.send(
+            "```css\nConnected to **{}**\n```".format(str(channel)), delete_after=10
+        )
 
-    @_music.command(name="loop", aliases=['lp'])
+    @_music.command(name="loop", aliases=["lp"])
     async def _loop(self, ctx, mode: str):
         """반복 재생"""
 
@@ -150,7 +168,9 @@ class music(Cog):
 
         modes = ["current", "all", "disable"]
         if not mode in modes:
-            return await ctx.send(f"invalid arg: {mode}\nuse: {'/'.join(modes)}", delete_after=5)
+            return await ctx.send(
+                f"invalid arg: {mode}\nuse: {'/'.join(modes)}", delete_after=5
+            )
 
         if mode == "disable":
             player.repeat = None
@@ -158,10 +178,10 @@ class music(Cog):
             player.repeat = mode
         await ctx.send(f"Player repeat: **{mode}**", delete_after=5)
 
-    @_music.command(name='play', aliases=['music', 'p'])
+    @_music.command(name="play", aliases=["music", "p"])
     async def play_(self, ctx, *, search: str):
         """재생"""
-        
+
         await ctx.trigger_typing()
 
         if await adult_filter(search=str(search)) == 1:
@@ -185,7 +205,7 @@ class music(Cog):
                 await self.cleanup(ctx.guild)
             await player.queue.put(source)
 
-    @_music.command(name='play_list', aliases=['ml'])
+    @_music.command(name="play_list", aliases=["ml"])
     async def create_playlist_play(self, ctx, *, search: str):
         """재생"""
         await ctx.trigger_typing()
@@ -206,8 +226,8 @@ class music(Cog):
                 source = await YTDLSource.create_playlist(ctx, search, download=False)
                 for ix in source:
                     await player.queue.put(ix)
-    
-    @_music.command(name='search')
+
+    @_music.command(name="search")
     async def _search(self, ctx: commands.Context, *, search: str):
         async with ctx.typing():
             try:
@@ -221,12 +241,12 @@ class music(Cog):
             except YTDLError as e:
                 await ctx.send(f"ERROR: {str(e)}")
             else:
-                if source == 'sel_invalid':
-                    await ctx.send('Invalid selection')
-                elif source == 'cancel':
-                    await ctx.send('cancel')
-                elif source == 'timeout':
-                    await ctx.send('Timeout')
+                if source == "sel_invalid":
+                    await ctx.send("Invalid selection")
+                elif source == "cancel":
+                    await ctx.send("cancel")
+                elif source == "timeout":
+                    await ctx.send("Timeout")
                 else:
                     if await adult_filter(search=search) == 1:
                         embed_two = EmbedSaftySearch(data=str(search))
@@ -238,8 +258,7 @@ class music(Cog):
                         player = self.get_player(ctx)
                         await player.queue.put(source)
 
-
-    @_music.command(name='pause')
+    @_music.command(name="pause")
     async def pause_(self, ctx):
         """일시중지"""
         vc = ctx.voice_client
@@ -248,19 +267,16 @@ class music(Cog):
             return await ctx.send(embed=embed_ERROR, delete_after=20)
         elif vc.is_paused():
             return
-        embed_pause = (
-            discord.Embed(
-                title="Music",
-                description=f'```css\n{ctx.author} : 일시중지.\n```',
-                color=discord.Color.blurple()
-            )
-                .add_field(name=self.verstring, value=self.buildVer)
-        )
+        embed_pause = discord.Embed(
+            title="Music",
+            description=f"```css\n{ctx.author} : 일시중지.\n```",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.verstring, value=self.buildVer)
 
         vc.pause()
         await ctx.send(embed=embed_pause, delete_after=5)
 
-    @_music.command(name='resume')
+    @_music.command(name="resume")
     async def resume_(self, ctx):
         """다시 재생"""
         vc = ctx.voice_client
@@ -271,18 +287,15 @@ class music(Cog):
             return
 
         vc.resume()
-        embed_resume = (
-            discord.Embed(
-                title="Music",
-                description=f'```css\n**{ctx.author}** : 다시재생.\n```',
-                color=discord.Color.blurple()
-            )
-                .add_field(name=self.verstring, value=self.buildVer)
-        )
+        embed_resume = discord.Embed(
+            title="Music",
+            description=f"```css\n**{ctx.author}** : 다시재생.\n```",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.verstring, value=self.buildVer)
 
         await ctx.send(embed_resume, delete_after=5)
 
-    @_music.command(name='skip')
+    @_music.command(name="skip")
     async def skip_(self, ctx):
         """스킵"""
         vc = ctx.voice_client
@@ -296,7 +309,7 @@ class music(Cog):
             return
 
         vc.stop()
-        await ctx.send(f'```css\n{ctx.author} : 스킵!.\n```', delete_after=5)
+        await ctx.send(f"```css\n{ctx.author} : 스킵!.\n```", delete_after=5)
 
     @_music.command(name="remove", aliases=["rm"])
     async def _remove(self, ctx, index: int):
@@ -316,7 +329,7 @@ class music(Cog):
         player.queue.shuffle()
         await ctx.send("Success")
 
-    @_music.command(name='queue', aliases=['q', 'playlist'])
+    @_music.command(name="queue", aliases=["q", "playlist"])
     async def queue_info(self, ctx):
         """재생목록"""
 
@@ -330,19 +343,18 @@ class music(Cog):
             return await ctx.send(embed=embed_queued)
 
         upcoming = list(itertools.islice(player.queue._queue, 0, 50))
-        fmt = '\n'.join(f'```css\n{_["title"]}\n```' for _ in upcoming)
-        embed_queue = (
-            discord.Embed(
-                title=f'Upcoming - Next **{len(upcoming)}**',
-                description=fmt,
-                color=discord.Color.blurple()
-            )
-            .add_field(name=self.verstring, value=self.buildVer)
-        )
+        fmt = "\n".join(f'```css\n{_["title"]}\n```' for _ in upcoming)
+        embed_queue = discord.Embed(
+            title=f"Upcoming - Next **{len(upcoming)}**",
+            description=fmt,
+            color=discord.Color.blurple(),
+        ).add_field(name=self.verstring, value=self.buildVer)
 
         await ctx.send(embed=embed_queue)
 
-    @_music.command(name='now_playing', aliases=['np', 'current', 'currentsong', 'playing'])
+    @_music.command(
+        name="now_playing", aliases=["np", "current", "currentsong", "playing"]
+    )
     async def now_playing_(self, ctx):
         """재생중인 컨텐츠 정보 보기"""
         vc = ctx.voice_client
@@ -358,17 +370,14 @@ class music(Cog):
             await player.np.delete()
         except discord.HTTPException:
             pass
-        embed_now_playing = (
-            discord.Embed(
-                title=f'Now Playing: ```{vc.source.title}```',
-                description=f'requested by @{vc.source.requester}',
-                color=discord.Color.blurple()
-            )
-                .add_field(name=self.verstring, value=self.buildVer)
-        )
+        embed_now_playing = discord.Embed(
+            title=f"Now Playing: ```{vc.source.title}```",
+            description=f"requested by @{vc.source.requester}",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.verstring, value=self.buildVer)
         player.np = await ctx.send(embed=embed_now_playing)
 
-    @_music.command(name='volume', aliases=['vol'])
+    @_music.command(name="volume", aliases=["vol"])
     async def change_volume(self, ctx, *, vol: float):
         """사운드 크기 조절"""
         vc = ctx.voice_client
@@ -385,18 +394,15 @@ class music(Cog):
             vc.source.volume = vol / 100
 
         player.volume = vol / 100
-        embed_now_playing = (
-            discord.Embed(
-                title="Music",
-                description=f'```{ctx.author}: Set the volume to {vol}%```',
-                color=discord.Color.blurple()
-            )
-                .add_field(name=self.verstring, value=self.buildVer)
-        )
+        embed_now_playing = discord.Embed(
+            title="Music",
+            description=f"```{ctx.author}: Set the volume to {vol}%```",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.verstring, value=self.buildVer)
 
         await ctx.send(embed=embed_now_playing, delete_after=10)
 
-    @_music.command(name='stop')
+    @_music.command(name="stop")
     async def stop_(self, ctx):
         """stop"""
         vc = ctx.voice_client

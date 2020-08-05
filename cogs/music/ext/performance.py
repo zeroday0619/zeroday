@@ -2,7 +2,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 
-running_threads = 0 
+running_threads = 0
 max_threads = 4
 
 

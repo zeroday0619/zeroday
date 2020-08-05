@@ -12,31 +12,31 @@ from .option import EmbedSaftySearch
 from .option import adult_filter
 
 
-youtube_dl.utils.bug_reports_message = lambda: ''
+youtube_dl.utils.bug_reports_message = lambda: ""
 ytdl = YoutubeDL(ytdl_format_options)
 
 
 class YTDLSource(PCMVolumeTransformer):
     FFMPEG_OPTIONS = {
-        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-        'options': '-vn',
+        "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+        "options": "-vn",
     }
 
     def __init__(self, source, *, data, requester):
         super().__init__(source)
         self.requester = requester
         self.filename = ytdl.prepare_filename(data)
-        date = data.get('upload_date')
-        self.url = data.get('url')  # Youtube Addresses
-        self.web_url = data.get('webpage_url')
-        self.data = data # Youtube Content Data
-        self.title = data.get('title') # Youtube Title
-        self.thumbnail = data.get('thumbnail') # Youtube Thumbnail
-        self.uploader = data.get('uploader') # Youtube Uploader
-        self.uploader_url = data.get('uploader_url')
-        self.description = data.get('description')
+        date = data.get("upload_date")
+        self.url = data.get("url")  # Youtube Addresses
+        self.web_url = data.get("webpage_url")
+        self.data = data  # Youtube Content Data
+        self.title = data.get("title")  # Youtube Title
+        self.thumbnail = data.get("thumbnail")  # Youtube Thumbnail
+        self.uploader = data.get("uploader")  # Youtube Uploader
+        self.uploader_url = data.get("uploader_url")
+        self.description = data.get("description")
 
-        self.duration = self.parse_duration(int(data.get('duration')))
+        self.duration = self.parse_duration(int(data.get("duration")))
 
     def __getitem__(self, item: str):
         return self.__getattribute__(item)
@@ -48,113 +48,171 @@ class YTDLSource(PCMVolumeTransformer):
             await ctx.send(embed=embed_two)
         else:
             channel = ctx.channel
-            cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
-            info = await run_in_threadpool(lambda :ytdl.extract_info(cls.search_query, download=download, process=False))
+            cls.search_query = "%s%s:%s" % ("ytsearch", 10, "".join(search))
+            info = await run_in_threadpool(
+                lambda: ytdl.extract_info(
+                    cls.search_query, download=download, process=False
+                )
+            )
 
             cls.search = {}
-            cls.search['title'] = f'Search result for:\n**{search}**'
-            cls.search['type'] = 'rich'
-            cls.search['color'] = 7506394
-            cls.search['author'] = {
-                'name': f'{ctx.author.name}',
-                'url': f'{ctx.author.avatar_url}',
-                'icon_url': f'{ctx.author.avatar_url}'
+            cls.search["title"] = f"Search result for:\n**{search}**"
+            cls.search["type"] = "rich"
+            cls.search["color"] = 7506394
+            cls.search["author"] = {
+                "name": f"{ctx.author.name}",
+                "url": f"{ctx.author.avatar_url}",
+                "icon_url": f"{ctx.author.avatar_url}",
             }
 
             lst = []
             _lst = lst.append
 
-            for e in info['entries']:
-                VId = e.get('id')
-                VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
+            for e in info["entries"]:
+                VId = e.get("id")
+                VUrl = "https://www.youtube.com/watch?v=%s" % (VId)
                 _lst(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
 
-            _lst('\n**Type a number to make a choice, Type `cancel` to exit**')
+            _lst("\n**Type a number to make a choice, Type `cancel` to exit**")
             cls.search["description"] = "\n".join(lst)
 
             em = discord.Embed.from_dict(cls.search)
             await ctx.send(embed=em, delete_after=45.0)
 
             def check(msg):
-                return msg.content.isdigit() == True and msg.channel == channel or msg.content == 'cancel' or msg.content == 'Cancel'
+                return (
+                    msg.content.isdigit() == True
+                    and msg.channel == channel
+                    or msg.content == "cancel"
+                    or msg.content == "Cancel"
+                )
 
             try:
-                m = await ctx.bot.wait_for('message', check=check, timeout=45.0)
+                m = await ctx.bot.wait_for("message", check=check, timeout=45.0)
 
             except asyncio.TimeoutError:
-                rtrn = 'timeout'
+                rtrn = "timeout"
 
             else:
                 if m.content.isdigit() == True:
                     sel = int(m.content)
                     if 0 < sel <= 10:
                         for key, value in info.items():
-                            if key == 'entries':
+                            if key == "entries":
                                 """data = value[sel - 1]"""
-                                VId = value[sel - 1]['id']
-                                VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-                                data = await run_in_threadpool(lambda : ytdl.extract_info(VUrl, download=False))
-    
-                        if await adult_filter(str(data['title'])) == 1:
-                            embed_two = EmbedSaftySearch(str(data['title']))
+                                VId = value[sel - 1]["id"]
+                                VUrl = "https://www.youtube.com/watch?v=%s" % (VId)
+                                data = await run_in_threadpool(
+                                    lambda: ytdl.extract_info(VUrl, download=False)
+                                )
+
+                        if await adult_filter(str(data["title"])) == 1:
+                            embed_two = EmbedSaftySearch(str(data["title"]))
                             await ctx.send(embed=embed_two)
-                            rtrn = 'cancel'
+                            rtrn = "cancel"
                         else:
-                            rtrn = cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
+                            rtrn = cls(
+                                discord.FFmpegPCMAudio(
+                                    data["url"], **cls.FFMPEG_OPTIONS
+                                ),
+                                data=data,
+                                requester=ctx.author,
+                            )
                     else:
-                        rtrn = 'sel_invalid'
-                elif m.content == 'cancel':
-                    rtrn = 'cancel'
+                        rtrn = "sel_invalid"
+                elif m.content == "cancel":
+                    rtrn = "cancel"
                 else:
-                    rtrn = 'sel_invalid'
+                    rtrn = "sel_invalid"
             return rtrn
 
     @classmethod
     async def create_playlist(cls, ctx, search: str, *, download=True, msg=True):
-        data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
+        data = await run_in_threadpool(
+            lambda: ytdl.extract_info(url=search, download=download)
+        )
         songs = []
         song = songs.append
-        for data in data['entries']:
-            if await adult_filter(search=str(data['title'])) == 1:
-                embed_two = EmbedSaftySearch(data=str(data['title']))
+        for data in data["entries"]:
+            if await adult_filter(search=str(data["title"])) == 1:
+                embed_two = EmbedSaftySearch(data=str(data["title"]))
                 await ctx.send(embed=embed_two)
             else:
                 if msg:
-                    await ctx.send("**{}**가 재생목록에 추가되었습니다.".format(str(data['title'])), delete_after=15)
+                    await ctx.send(
+                        "**{}**가 재생목록에 추가되었습니다.".format(str(data["title"])),
+                        delete_after=15,
+                    )
 
                 if download:
-                    source = await run_in_threadpool(lambda: ytdl.prepare_filename(data))
-                    song(cls(discord.FFmpegPCMAudio(source=source), data=data, requester=ctx.author))
+                    source = await run_in_threadpool(
+                        lambda: ytdl.prepare_filename(data)
+                    )
+                    song(
+                        cls(
+                            discord.FFmpegPCMAudio(source=source),
+                            data=data,
+                            requester=ctx.author,
+                        )
+                    )
                 else:
-                    song(cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author))
+                    song(
+                        cls(
+                            discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
+                            data=data,
+                            requester=ctx.author,
+                        )
+                    )
         return songs
 
     @classmethod
     async def Search(cls, ctx, search: str, *, download=False, msg=True):
-        data = await run_in_threadpool(lambda: ytdl.extract_info(url=str(search), download=download))
-        if 'entries' in data:
-            data = data['entries'][0]
+        data = await run_in_threadpool(
+            lambda: ytdl.extract_info(url=str(search), download=download)
+        )
+        if "entries" in data:
+            data = data["entries"][0]
 
-        if await adult_filter(search=str(data['title'])) == 1:
-            embed_two = EmbedSaftySearch(data=str(data['title']))
+        if await adult_filter(search=str(data["title"])) == 1:
+            embed_two = EmbedSaftySearch(data=str(data["title"]))
             await ctx.send(embed=embed_two)
             return
 
         if msg:
-            await ctx.send("**{}**가 재생목록에 추가되었습니다.".format(str(data['title'])), delete_after=5)
+            await ctx.send(
+                "**{}**가 재생목록에 추가되었습니다.".format(str(data["title"])), delete_after=5
+            )
 
         # =============================================================================================
         if download:
             source = await run_in_threadpool(lambda: ytdl.prepare_filename(data))
         else:
-            return cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
+            return cls(
+                discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
+                data=data,
+                requester=ctx.author,
+            )
 
-        return cls(discord.FFmpegPCMAudio(source=source, executable="ffmpeg", options="-async 1 -ab 720k -vcodec flac -threads 16"), data=data, requester=ctx.author)
+        return cls(
+            discord.FFmpegPCMAudio(
+                source=source,
+                executable="ffmpeg",
+                options="-async 1 -ab 720k -vcodec flac -threads 16",
+            ),
+            data=data,
+            requester=ctx.author,
+        )
 
     @classmethod
     async def regather_stream(cls, ctx, *, download=False):
-        data = await run_in_threadpool(lambda : ytdl.extract_info(url=data['webpage_url'], download=download))
-        return cls(discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author)
+        data = await run_in_threadpool(
+            lambda: ytdl.extract_info(url=data["webpage_url"], download=download)
+        )
+        return cls(
+            discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
+            data=data,
+            requester=ctx.author,
+        )
 
     @staticmethod
     def parse_duration(duration: int):
@@ -166,16 +224,16 @@ class YTDLSource(PCMVolumeTransformer):
             duration = []
             _duration = duration.append
             if days > 0:
-                _duration('{} days'.format(days))
+                _duration("{} days".format(days))
             if hours > 0:
-                _duration('{} hours'.format(hours))
+                _duration("{} hours".format(hours))
             if minutes > 0:
-                _duration('{} minutes'.format(minutes))
+                _duration("{} minutes".format(minutes))
             if seconds > 0:
-                _duration('{} seconds'.format(seconds))
-            
-            value = ', '.join(duration)
-        
+                _duration("{} seconds".format(seconds))
+
+            value = ", ".join(duration)
+
         elif duration == 0:
-            value = "LIVE BATA"        
+            value = "LIVE BATA"
         return value

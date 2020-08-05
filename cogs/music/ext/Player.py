@@ -33,7 +33,19 @@ class Player:
     """
 	Base class for Music Player
 	"""
-    __slots__ = ('bot', '_guild', '_channel', '_cog', 'queue', 'next', 'current', 'np', 'volume', 'repeat')
+
+    __slots__ = (
+        "bot",
+        "_guild",
+        "_channel",
+        "_cog",
+        "queue",
+        "next",
+        "current",
+        "np",
+        "volume",
+        "repeat",
+    )
 
     def __init__(self, ctx):
         self.bot = ctx.bot
@@ -45,7 +57,7 @@ class Player:
         self.next = asyncio.Event()
 
         self.np = None
-        self.volume = .5
+        self.volume = 0.5
         self.current = None
         self.repeat = False
         ctx.bot.loop.create_task(self.player_loop())
@@ -69,17 +81,26 @@ class Player:
 
             embed = (
                 discord.Embed(
-                    title='Now playing', description='```css\n{0.title}\n```'.format(source),
-                    color=discord.Color.blurple()
+                    title="Now playing",
+                    description="```css\n{0.title}\n```".format(source),
+                    color=discord.Color.blurple(),
                 )
-                .add_field(name='Duration', value=self.current.duration)
-                .add_field(name='Requested by', value=self.current.requester)
-                .add_field(name='Uploader', value='[{0.uploader}]({0.uploader_url})'.format(self.current))
-                .add_field(name='URL', value='[Click]({0.web_url})'.format(self.current))
+                .add_field(name="Duration", value=self.current.duration)
+                .add_field(name="Requested by", value=self.current.requester)
+                .add_field(
+                    name="Uploader",
+                    value="[{0.uploader}]({0.uploader_url})".format(self.current),
+                )
+                .add_field(
+                    name="URL", value="[Click]({0.web_url})".format(self.current)
+                )
                 .set_thumbnail(url=self.current.thumbnail)
             )
 
-            self._guild.voice_client.play(source, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
+            self._guild.voice_client.play(
+                source,
+                after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
+            )
             self.np = await self._channel.send(embed=embed)
 
             await self.next.wait()
@@ -90,16 +111,19 @@ class Player:
                 search = source.web_url
 
                 try:
-                    source_repeat = await YTDLSource.Search(ctx, search, download=False, msg=False)    
+                    source_repeat = await YTDLSource.Search(
+                        ctx, search, download=False, msg=False
+                    )
                 except Exception as e:
-                    await self._channel.send(f'There was an error procecsing your song.\n ```css\n[{e}]\n```')
+                    await self._channel.send(
+                        f"There was an error procecsing your song.\n ```css\n[{e}]\n```"
+                    )
                     continue
-                
+
                 if self.repeat == "current":
                     self.queue._queue.appendleft(source_repeat)
                 else:
                     await self.queue.put(source_repeat)
-
 
             try:
                 await self.np.delete()
