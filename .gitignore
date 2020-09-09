@@ -4,6 +4,8 @@
 ### Credential ###
 config.json
 
+pythonenv3.8/
+pythonenv3.8/*
 ### YoutubeDL ###
 downloads/
 
