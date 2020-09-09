@@ -184,7 +184,7 @@ class music(Cog):
 
         await ctx.trigger_typing()
 
-        if await adult_filter(search=str(search)) == 1:
+        if await adult_filter(search=str(search), loop=ctx.bot.loop) == 1:
             embed_one = EmbedSaftySearch(data=str(search))
             await ctx.send(embed=embed_one)
         else:
@@ -193,13 +193,13 @@ class music(Cog):
                 await ctx.invoke(self.connect_)
             player = self.get_player(ctx)
             if checkers.is_url(search):
-                source = await YTDLSource.Search(ctx, search, download=False)
+                source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
             else:
                 search_text = search
                 serc = search_text.replace(":", "")
-                source = await YTDLSource.Search(ctx, serc, download=False)
+                source = await YTDLSource.Search(ctx, serc, download=False, loop=ctx.bot.loop)
 
-            if await adult_filter(search=source.title) == 1:
+            if await adult_filter(search=source.title, loop=ctx.bot.loop) == 1:
                 embed_two = EmbedSaftySearch(data=str(search))
                 await ctx.send(embed=embed_two)
                 await self.cleanup(ctx.guild)
@@ -210,7 +210,7 @@ class music(Cog):
         """재생"""
         await ctx.trigger_typing()
 
-        if await adult_filter(search=str(search)) == 1:
+        if await adult_filter(search=str(search), loop=ctx.bot.loop) == 1:
             embed_one = EmbedSaftySearch(data=str(search))
             await ctx.send(embed=embed_one)
         else:
@@ -218,12 +218,12 @@ class music(Cog):
             if not vc:
                 await ctx.invoke(self.connect_)
 
-            if await adult_filter(search=search) == 1:
+            if await adult_filter(search=search, loop=ctx.bot.loop) == 1:
                 embed_two = EmbedSaftySearch(data=str(search))
                 await ctx.send(embed=embed_two)
             else:
                 player = self.get_player(ctx)
-                source = await YTDLSource.create_playlist(ctx, search, download=False)
+                source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
                 for ix in source:
                     await player.queue.put(ix)
 
@@ -232,11 +232,11 @@ class music(Cog):
         async with ctx.typing():
             try:
                 if checkers.is_url(search):
-                    source = await YTDLSource.search_source(ctx, search, download=False)
+                    source = await YTDLSource.search_source(ctx, search, download=False, loop=ctx.bot.loop)
                 else:
                     sr = search
                     sear = sr.replace(":", "")
-                    source = await YTDLSource.search_source(ctx, sear, download=False)
+                    source = await YTDLSource.search_source(ctx, sear, download=False, loop=ctx.bot.loop)
 
             except YTDLError as e:
                 await ctx.send(f"ERROR: {str(e)}")
@@ -248,7 +248,7 @@ class music(Cog):
                 elif source == "timeout":
                     await ctx.send("Timeout")
                 else:
-                    if await adult_filter(search=search) == 1:
+                    if await adult_filter(search=search, loop=ctx.bot.loop) == 1:
                         embed_two = EmbedSaftySearch(data=str(search))
                         await ctx.send(embed=embed_two)
                     else:

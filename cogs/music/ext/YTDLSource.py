@@ -42,18 +42,16 @@ class YTDLSource(PCMVolumeTransformer):
         return self.__getattribute__(item)
 
     @classmethod
-    async def search_source(cls, ctx, search: str, *, download=False):
-        if await adult_filter(str(search)) == 1:
+    async def search_source(cls, ctx, search: str, *, download=False, loop: asyncio.BaseEventLoop = None):
+        loop = loop or asyncio.get_event_loop()
+        if await adult_filter(str(search), loop=ctx.bot.loop) == 1:
             embed_two = EmbedSaftySearch(str(search))
             await ctx.send(embed=embed_two)
         else:
             channel = ctx.channel
             cls.search_query = "%s%s:%s" % ("ytsearch", 10, "".join(search))
-            info = await run_in_threadpool(
-                lambda: ytdl.extract_info(
-                    cls.search_query, download=download, process=False
-                )
-            )
+            params = partial(ytdl.extract_info, cls.search_query, download=download, process=False)
+            info = await loop.run_in_executor(None, params)
 
             cls.search = {}
             cls.search["title"] = f"Search result for:\n**{search}**"
@@ -102,11 +100,10 @@ class YTDLSource(PCMVolumeTransformer):
                                 """data = value[sel - 1]"""
                                 VId = value[sel - 1]["id"]
                                 VUrl = "https://www.youtube.com/watch?v=%s" % (VId)
-                                data = await run_in_threadpool(
-                                    lambda: ytdl.extract_info(VUrl, download=False)
-                                )
+                                params_data = partial(ytdl.extract_info, VUrl, download=download)
+                                data = await loop.run_in_executor(None, params_data)
 
-                        if await adult_filter(str(data["title"])) == 1:
+                        if await adult_filter(str(data["title"]), loop=ctx.bot.loop) == 1:
                             embed_two = EmbedSaftySearch(str(data["title"]))
                             await ctx.send(embed=embed_two)
                             rtrn = "cancel"
@@ -127,14 +124,14 @@ class YTDLSource(PCMVolumeTransformer):
             return rtrn
 
     @classmethod
-    async def create_playlist(cls, ctx, search: str, *, download=True, msg=True):
-        data = await run_in_threadpool(
-            lambda: ytdl.extract_info(url=search, download=download)
-        )
+    async def create_playlist(cls, ctx, search: str, *, download=True, msg=True, loop: asyncio.BaseEventLoop = None):
+        loop = loop or asyncio.get_event_loop()
+        params_data = partial(ytdl.extract_info, url=search, download=download)
+        data = await loop.run_in_executor(None, params_data)
         songs = []
         song = songs.append
         for data in data["entries"]:
-            if await adult_filter(search=str(data["title"])) == 1:
+            if await adult_filter(search=str(data["title"]), loop=ctx.bot.loop) == 1:
                 embed_two = EmbedSaftySearch(data=str(data["title"]))
                 await ctx.send(embed=embed_two)
             else:
@@ -166,14 +163,15 @@ class YTDLSource(PCMVolumeTransformer):
         return songs
 
     @classmethod
-    async def Search(cls, ctx, search: str, *, download=False, msg=True):
-        data = await run_in_threadpool(
-            lambda: ytdl.extract_info(url=str(search), download=download)
-        )
+    async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
+        loop = loop or asyncio.get_event_loop()
+        params_data = partial(ytdl.extract_info, url=str(search), download=download)
+        data = await loop.run_in_executor(None, params_data)
+
         if "entries" in data:
             data = data["entries"][0]
 
-        if await adult_filter(search=str(data["title"])) == 1:
+        if await adult_filter(search=str(data["title"]), loop=ctx.bot.loop) == 1:
             embed_two = EmbedSaftySearch(data=str(data["title"]))
             await ctx.send(embed=embed_two)
             return

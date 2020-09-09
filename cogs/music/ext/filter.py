@@ -1,7 +1,10 @@
 from Utils import config
 from .performance import run_in_threadpool
+import functools
 import pymongo
+import asyncio
 import aiohttp
+
 
 class SafetySearch:
     """
@@ -28,11 +31,13 @@ class SafetySearch:
                 result = await resp.json()
         return result
 
-    async def adult_filter(self, search: str):
+    async def adult_filter(self, search: str, loop: asyncio.BaseEventLoop = None):
+        loop = loop or asyncio.get_event_loop()
         data = {"query": search}
-        client = await run_in_threadpool(
-            lambda: pymongo.MongoClient(self.MongoDB_URL, self.MongoDB_PORT)
-        )
+
+        params_clent = functools.partial(pymongo.MongoClient, self.MongoDB_URL, self.MongoDB_PORT)
+        client = await loop.run_in_executor(None, params_clent)
+
         db = client["adult_filter"]
         collection = db["database"]
 
