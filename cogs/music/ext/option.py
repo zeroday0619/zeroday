@@ -78,10 +78,10 @@ class BlockedContent(Exception):
         return self.msg
 
 
-async def adult_filter(search):
-    if await safe.adult_filter(search=str(search)) == 1:
+async def adult_filter(search, loop):
+    if await safe.adult_filter(search=str(search), loop=loop) == 1:
         return 1
-    elif await safe.adult_filter(search=str(search)) == 2:
+    elif await safe.adult_filter(search=str(search), loop=loop) == 2:
         return 1
     else:
         return 0
