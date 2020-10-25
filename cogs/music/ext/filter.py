@@ -41,6 +41,12 @@ class SafetySearch:
         db = client["adult_filter"]
         collection = db["database"]
 
+        collection.create_index(
+            [
+                ("filter_string", pymongo.ASCENDING),
+                ("green", pymongo.ASCENDING)
+            ]
+        )
         mo = await run_in_threadpool(
             lambda: db.database.find_one({"filter_string": search})
         )
