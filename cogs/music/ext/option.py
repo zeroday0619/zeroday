@@ -27,6 +27,7 @@ def ytdl_format_options_a():
         "no_warnings": True,
         "default_search": "auto",
         "source_address": "0.0.0.0",
+        "age-limit": 17
     }
     return options
 

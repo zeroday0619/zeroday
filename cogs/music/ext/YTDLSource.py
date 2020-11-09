@@ -1,3 +1,4 @@
+import re
 import discord
 import asyncio
 import youtube_dl
@@ -53,22 +54,18 @@ class YTDLSource(PCMVolumeTransformer):
             params = partial(ytdl.extract_info, cls.search_query, download=download, process=False)
             info = await loop.run_in_executor(None, params)
 
-            cls.search = {}
-            cls.search["title"] = f"Search result for:\n**{search}**"
-            cls.search["type"] = "rich"
-            cls.search["color"] = 7506394
-            cls.search["author"] = {
+            cls.search = {"title": f"Search result for:\n**{search}**", "type": "rich", "color": 7506394, "author": {
                 "name": f"{ctx.author.name}",
                 "url": f"{ctx.author.avatar_url}",
                 "icon_url": f"{ctx.author.avatar_url}",
-            }
+            }}
 
             lst = []
             _lst = lst.append
 
             for e in info["entries"]:
                 VId = e.get("id")
-                VUrl = "https://www.youtube.com/watch?v=%s" % (VId)
+                VUrl = "https://www.youtube.com/watch?v=%s" % VId
                 _lst(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
 
             _lst("\n**Type a number to make a choice, Type `cancel` to exit**")
@@ -124,10 +121,11 @@ class YTDLSource(PCMVolumeTransformer):
             return rtrn
 
     @classmethod
-    async def create_playlist(cls, ctx, search: str, *, download=True, msg=True, loop: asyncio.BaseEventLoop = None):
+    async def create_playlist(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
         params_data = partial(ytdl.extract_info, url=search, download=download)
         data = await loop.run_in_executor(None, params_data)
+
         songs = []
         song = songs.append
         for data in data["entries"]:
@@ -141,25 +139,13 @@ class YTDLSource(PCMVolumeTransformer):
                         delete_after=15,
                     )
 
-                if download:
-                    source = await run_in_threadpool(
-                        lambda: ytdl.prepare_filename(data)
+                song(
+                    cls(
+                        discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
+                        data=data,
+                        requester=ctx.author,
                     )
-                    song(
-                        cls(
-                            discord.FFmpegPCMAudio(source=source),
-                            data=data,
-                            requester=ctx.author,
-                        )
-                    )
-                else:
-                    song(
-                        cls(
-                            discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
-                            data=data,
-                            requester=ctx.author,
-                        )
-                    )
+                )
         return songs
 
     @classmethod
@@ -171,10 +157,17 @@ class YTDLSource(PCMVolumeTransformer):
         if "entries" in data:
             data = data["entries"][0]
 
+        block_text = ["빌리와구슬고자"]
+
+        if bool(re.search(data['title'].strip(), block_text[0])):
+            embed_two = EmbedSaftySearch(data=str(data["title"]))
+            await ctx.send(embed=embed_two)
+            return None
+
         if await adult_filter(search=str(data["title"]), loop=ctx.bot.loop) == 1:
             embed_two = EmbedSaftySearch(data=str(data["title"]))
             await ctx.send(embed=embed_two)
-            return
+            return None
 
         if msg:
             await ctx.send(
@@ -182,21 +175,8 @@ class YTDLSource(PCMVolumeTransformer):
             )
 
         # =============================================================================================
-        if download:
-            source = await run_in_threadpool(lambda: ytdl.prepare_filename(data))
-        else:
-            return cls(
-                discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
-                data=data,
-                requester=ctx.author,
-            )
-
         return cls(
-            discord.FFmpegPCMAudio(
-                source=source,
-                executable="ffmpeg",
-                options="-async 1 -ab 720k -vcodec flac -threads 16",
-            ),
+            discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
             data=data,
             requester=ctx.author,
         )
@@ -214,6 +194,7 @@ class YTDLSource(PCMVolumeTransformer):
 
     @staticmethod
     def parse_duration(duration: int):
+        value = None
         if duration > 0:
             minutes, seconds = divmod(duration, 60)
             hours, minutes = divmod(minutes, 60)
@@ -233,5 +214,5 @@ class YTDLSource(PCMVolumeTransformer):
             value = ", ".join(duration)
 
         elif duration == 0:
-            value = "LIVE BATA"
+            value = "LIVE BETA"
         return value

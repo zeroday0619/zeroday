@@ -47,6 +47,12 @@ class SafetySearch:
                 ("green", pymongo.ASCENDING)
             ]
         )
+        default_filter = [
+            {"filter_string": "[붕탁]빌리와 구슬고자"}
+        ]
+        await run_in_threadpool(
+            lambda: collection.insert_many(default_filter)
+        )
         mo = await run_in_threadpool(
             lambda: db.database.find_one({"filter_string": search})
         )

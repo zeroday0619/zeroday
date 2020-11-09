@@ -85,16 +85,16 @@ class Player:
                     description="```css\n{0.title}\n```".format(source),
                     color=discord.Color.blurple(),
                 )
-                .add_field(name="Duration", value=self.current.duration)
-                .add_field(name="Requested by", value=self.current.requester)
-                .add_field(
+                    .add_field(name="Duration", value=self.current.duration)
+                    .add_field(name="Requested by", value=self.current.requester)
+                    .add_field(
                     name="Uploader",
                     value="[{0.uploader}]({0.uploader_url})".format(self.current),
                 )
-                .add_field(
+                    .add_field(
                     name="URL", value="[Click]({0.web_url})".format(self.current)
                 )
-                .set_thumbnail(url=self.current.thumbnail)
+                    .set_thumbnail(url=self.current.thumbnail)
             )
 
             self._guild.voice_client.play(

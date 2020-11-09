@@ -28,6 +28,10 @@ class YTDLError(Exception):
     pass
 
 
+def cleanText(readData):
+    text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', readData)
+    return text
+
 class music(Cog):
     """뮤직 모듈"""
 
@@ -42,19 +46,19 @@ class music(Cog):
     async def cleanup(self, guild):
         try:
             await guild.voice_client.disconnect()
-        except AttributeError:
-            pass
+        except AttributeError as e:
+            print(f"{e.__class__.__module__}: {e.__class__.__name__}")
 
         try:
             for source in self.players[guild.id].queue._queue:
                 source.cleanup()
-        except KeyError:
-            pass
+        except KeyError as e:
+            print(f"{e.__class__.__module__}: {e.__class__.__name__}")
 
         try:
             del self.players[guild.id]
-        except KeyError:
-            pass
+        except KeyError as e:
+            print(f"{e.__class__.__module__}: {e.__class__.__name__}")
 
     @staticmethod
     async def __local_check(ctx):
@@ -67,8 +71,8 @@ class music(Cog):
         if isinstance(error, NoPrivateMessage):
             try:
                 return await ctx.send("이 Command 는 DM 에서 사용할 수 없습니다")
-            except discord.HTTPException:
-                pass
+            except discord.HTTPException as e:
+                print(f"{e.__class__.__module__}: {e.__class__.__name__}")
 
         elif isinstance(error, InvalidVoiceChannel):
             await ctx.send(
@@ -115,8 +119,7 @@ class music(Cog):
         |  volume  |   vol   |사운드 크기 조절
         |   stop   |  None   |종료
         ```
-
-		"""
+        """
         if ctx.invoked_subcommand is None:
             help_cmd = self.bot.get_command("help")
             await ctx.invoke(help_cmd, "music")
@@ -127,12 +130,10 @@ class music(Cog):
         if not channel:
             try:
                 channel = ctx.author.voice.channel
-
             except AttributeError as r2:
-                await ctx.send("Error: {}".format(str(r2)))
-                raise InvalidVoiceChannel(
-                    "Voice channel에 연결하지 못하였습니다.\n 유효한 Voice Channel과 자신이 Voice Channel에 들어와 있는지 확인바랍니다."
-                )
+                await ctx.send("'Voice channel'에 연결하지 못하였습니다.\n 유효한 'Voice channel'에 자신이 들어와 있는지 확인바랍니다.")
+                raise InvalidVoiceChannel(f"{r2.__class__.__module__}: {r2.__class__.__name__}")
+
         vc = ctx.voice_client
 
         if vc:
@@ -141,18 +142,15 @@ class music(Cog):
             try:
                 await vc.move_to(channel)
             except asyncio.TimeoutError as TError:
-                await ctx.send("Error: {}".format(str(TError)))
-                raise VoiceConnectionError(
-                    "Moving to channel: <{}> timed out".format(str(channel))
-                )
+                await ctx.send(f"Moving to channel: <{str(channel)}> timed out")
+                raise VoiceConnectionError(f"{TError.__class__.__module__}: {TError.__class__.__name__}")
         else:
             try:
                 await channel.connect()
             except asyncio.TimeoutError as TError2:
-                await ctx.send("Error: {}".format(str(TError2)))
-                raise VoiceConnectionError(
-                    "Connecting to channel: <{}> timed out".format(str(channel))
-                )
+                await ctx.send(f"Connecting to channel: <{str(channel)}> timed out")
+                raise VoiceConnectionError(f"{TError2.__class__.__module__}: {TError2.__class__.__name__}")
+
         await ctx.send(
             "```css\nConnected to **{}**\n```".format(str(channel)), delete_after=10
         )
@@ -181,28 +179,24 @@ class music(Cog):
     @_music.command(name="play", aliases=["music", "p"])
     async def play_(self, ctx, *, search: str):
         """재생"""
-
         await ctx.trigger_typing()
 
-        if await adult_filter(search=str(search), loop=ctx.bot.loop) == 1:
-            embed_one = EmbedSaftySearch(data=str(search))
-            await ctx.send(embed=embed_one)
+        vc = ctx.voice_client
+        if not vc:
+            await ctx.invoke(self.connect_)
+        player = self.get_player(ctx)
+        if checkers.is_url(search):
+            source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
         else:
-            vc = ctx.voice_client
-            if not vc:
-                await ctx.invoke(self.connect_)
-            player = self.get_player(ctx)
-            if checkers.is_url(search):
-                source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
-            else:
-                search_text = search
-                serc = search_text.replace(":", "")
-                source = await YTDLSource.Search(ctx, serc, download=False, loop=ctx.bot.loop)
+            search_text = search
+            serc = search_text.replace(":", "")
+            source = await YTDLSource.Search(ctx, serc, download=False, loop=ctx.bot.loop)
 
-            if await adult_filter(search=source.title, loop=ctx.bot.loop) == 1:
-                embed_two = EmbedSaftySearch(data=str(search))
-                await ctx.send(embed=embed_two)
-                await self.cleanup(ctx.guild)
+        if await adult_filter(search=source.title, loop=ctx.bot.loop) == 1:
+            embed_two = EmbedSaftySearch(data=str(search))
+            await ctx.send(embed=embed_two)
+            await self.cleanup(ctx.guild)
+        else:
             await player.queue.put(source)
 
     @_music.command(name="play_list", aliases=["ml"])
@@ -210,22 +204,18 @@ class music(Cog):
         """재생"""
         await ctx.trigger_typing()
 
-        if await adult_filter(search=str(search), loop=ctx.bot.loop) == 1:
-            embed_one = EmbedSaftySearch(data=str(search))
-            await ctx.send(embed=embed_one)
-        else:
-            vc = ctx.voice_client
-            if not vc:
-                await ctx.invoke(self.connect_)
+        vc = ctx.voice_client
+        if not vc:
+            await ctx.invoke(self.connect_)
 
-            if await adult_filter(search=search, loop=ctx.bot.loop) == 1:
-                embed_two = EmbedSaftySearch(data=str(search))
-                await ctx.send(embed=embed_two)
-            else:
-                player = self.get_player(ctx)
-                source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
-                for ix in source:
-                    await player.queue.put(ix)
+        if await adult_filter(search=search, loop=ctx.bot.loop) == 1:
+            embed_two = EmbedSaftySearch(data=str(search))
+            await ctx.send(embed=embed_two)
+        else:
+            player = self.get_player(ctx)
+            source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
+            for ix in source:
+                await player.queue.put(ix)
 
     @_music.command(name="search")
     async def _search(self, ctx: commands.Context, *, search: str):
