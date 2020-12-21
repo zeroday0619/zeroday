@@ -4,18 +4,17 @@ import traceback
 import itertools
 import re
 import sys
+
 from validator_collection import checkers
 from discord.ext import commands
 from discord.ext.commands import Bot
 from discord.ext.commands import Cog
 from discord.ext.commands import NoPrivateMessage
-from .ext.option import EmbedSaftySearch
-from .ext.option import adult_filter
-from .ext.performance import run_in_threadpool
-from .ext.filter import safe
-from .ext.YTDLSource import YTDLSource
-from .ext.Player import Player
-from .ext.option import (
+from app.ext.music.option import EmbedSaftySearch
+from app.ext.music.option import adult_filter
+from app.ext.music.YTDLSource import YTDLSource
+from app.ext.music.Player import Player
+from app.ext.music.option import (
     embed_ERROR,
     embed_queued,
     embed_value,
@@ -32,6 +31,7 @@ def cleanText(readData):
     text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', readData)
     return text
 
+
 class music(Cog):
     """뮤직 모듈"""
 
@@ -40,7 +40,7 @@ class music(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.players = {}
-        self.buildVer = "3.1"
+        self.buildVer = "3.4.1"
         self.verstring = "Ver"
 
     async def cleanup(self, guild):
@@ -79,6 +79,7 @@ class music(Cog):
                 "Voice Channel 연결중 Error 가 발생하였습니다\n 자신이 Voice Channel에 접속되어 있는 지 확인 바랍니다."
             )
 
+        await ctx.send("ERROR: Ignoring exception in command {}".format(ctx.command))
         print("Ignoring exception in command {}".format(ctx.command), file=sys.stderr)
         traceback.print_exception(
             type(error), error, error.__traceback__, file=sys.stderr
@@ -93,6 +94,7 @@ class music(Cog):
         except KeyError:
             player = Player(ctx)
             self.players[ctx.guild.id] = player
+
         return player
 
     @commands.group(name="music", aliases=["m"])
@@ -217,6 +219,7 @@ class music(Cog):
             for ix in source:
                 await player.queue.put(ix)
 
+    """
     @_music.command(name="search")
     async def _search(self, ctx: commands.Context, *, search: str):
         async with ctx.typing():
@@ -226,6 +229,7 @@ class music(Cog):
                 else:
                     sr = search
                     sear = sr.replace(":", "")
+                    print(sear)
                     source = await YTDLSource.search_source(ctx, sear, download=False, loop=ctx.bot.loop)
 
             except YTDLError as e:
@@ -247,12 +251,12 @@ class music(Cog):
                             await ctx.invoke(self.connect_)
                         player = self.get_player(ctx)
                         await player.queue.put(source)
+    """
 
     @_music.command(name="pause")
     async def pause_(self, ctx):
         """일시중지"""
         vc = ctx.voice_client
-
         if not vc or not vc.is_playing():
             return await ctx.send(embed=embed_ERROR, delete_after=20)
         elif vc.is_paused():

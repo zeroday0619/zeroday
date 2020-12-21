@@ -1,11 +1,11 @@
-from discord.ext.commands import AutoShardedBot
+from discord.ext.commands import Bot
 from Utils import config
 from itertools import cycle
 
 status = cycle(["!help", "Ver 3.1"])
 
 
-class Bot(AutoShardedBot):
+class Bot(Bot):
     def __init__(self, *args, prefix=None, **kwargs):
         super().__init__(*args, **kwargs)
 

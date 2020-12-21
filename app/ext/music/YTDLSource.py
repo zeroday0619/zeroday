@@ -7,11 +7,10 @@ from discord import PCMVolumeTransformer
 from youtube_dl import YoutubeDL
 from functools import partial
 
-from .performance import run_in_threadpool
-from .option import ytdl_format_options
-from .option import EmbedSaftySearch
-from .option import adult_filter
-
+from app.ext.performance import run_in_threadpool
+from app.ext.music.option import ytdl_format_options
+from app.ext.music.option import EmbedSaftySearch
+from app.ext.music.option import adult_filter
 
 youtube_dl.utils.bug_reports_message = lambda: ""
 ytdl = YoutubeDL(ytdl_format_options)
@@ -19,7 +18,7 @@ ytdl = YoutubeDL(ytdl_format_options)
 
 class YTDLSource(PCMVolumeTransformer):
     FFMPEG_OPTIONS = {
-        "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+        "before_options": "-reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5",
         "options": "-vn",
     }
 
@@ -51,7 +50,7 @@ class YTDLSource(PCMVolumeTransformer):
         else:
             channel = ctx.channel
             cls.search_query = "%s%s:%s" % ("ytsearch", 10, "".join(search))
-            params = partial(ytdl.extract_info, cls.search_query, download=download, process=False)
+            params = partial(ytdl.extract_info, cls.search_query, download=True, process=False)
             info = await loop.run_in_executor(None, params)
 
             cls.search = {"title": f"Search result for:\n**{search}**", "type": "rich", "color": 7506394, "author": {
@@ -67,28 +66,25 @@ class YTDLSource(PCMVolumeTransformer):
                 VId = e.get("id")
                 VUrl = "https://www.youtube.com/watch?v=%s" % VId
                 _lst(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
-
+            print(1)
             _lst("\n**Type a number to make a choice, Type `cancel` to exit**")
             cls.search["description"] = "\n".join(lst)
-
+            print(cls.search)
             em = discord.Embed.from_dict(cls.search)
             await ctx.send(embed=em, delete_after=45.0)
 
             def check(msg):
-                return (
-                    msg.content.isdigit() == True
-                    and msg.channel == channel
-                    or msg.content == "cancel"
-                    or msg.content == "Cancel"
-                )
+                return (msg.content.isdigit() == True and msg.channel == channel or msg.content == "cancel" or msg.content == "Cancel")
 
             try:
+                print(1)
                 m = await ctx.bot.wait_for("message", check=check, timeout=45.0)
 
             except asyncio.TimeoutError:
                 rtrn = "timeout"
 
             else:
+                print(1)
                 if m.content.isdigit() == True:
                     sel = int(m.content)
                     if 0 < sel <= 10:
@@ -96,6 +92,7 @@ class YTDLSource(PCMVolumeTransformer):
                             if key == "entries":
                                 """data = value[sel - 1]"""
                                 VId = value[sel - 1]["id"]
+                                print(VId)
                                 VUrl = "https://www.youtube.com/watch?v=%s" % (VId)
                                 params_data = partial(ytdl.extract_info, VUrl, download=download)
                                 data = await loop.run_in_executor(None, params_data)
@@ -129,23 +126,19 @@ class YTDLSource(PCMVolumeTransformer):
         songs = []
         song = songs.append
         for data in data["entries"]:
-            if await adult_filter(search=str(data["title"]), loop=ctx.bot.loop) == 1:
-                embed_two = EmbedSaftySearch(data=str(data["title"]))
-                await ctx.send(embed=embed_two)
-            else:
-                if msg:
-                    await ctx.send(
-                        "**{}**가 재생목록에 추가되었습니다.".format(str(data["title"])),
-                        delete_after=15,
-                    )
-
-                song(
-                    cls(
-                        discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
-                        data=data,
-                        requester=ctx.author,
-                    )
+            if msg:
+                await ctx.send(
+                    "**{}**가 재생목록에 추가되었습니다.".format(str(data["title"])),
+                    delete_after=15,
                 )
+
+            song(
+                cls(
+                    discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
+                    data=data,
+                    requester=ctx.author,
+                )
+            )
         return songs
 
     @classmethod

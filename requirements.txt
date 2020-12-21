@@ -1,7 +1,7 @@
-validator-collection==1.5.0
-discord.py[voice]==1.5.1
-websockets==8.1
-youtube_dl==2020.11.1.1
-requests==2.24.0
-pymongo==3.11.0
-psutil==5.7.3
+validator-collection
+discord.py[voice]
+websockets
+youtube_dl
+requests
+pymongo
+psutil

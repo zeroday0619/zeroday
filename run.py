@@ -1,7 +1,5 @@
 from websockets.exceptions import ConnectionClosedError
 
-
-
 try:
     from core import *
     from Utils.load_extension import LoadExtension, ReloadExtension, AsyncLoadExtension
@@ -49,7 +47,7 @@ try:
     bot.loop.run_in_executor(None, bot.remove_command, "help")
     AsyncLoadExtension(_cogs=async_ext)
     LoadExtension(_cogs=_ext)
-    bot.loop.run_until_complete(bot.run(token))
+    bot.run(token)
 except TypeError:
     print("\nShutdown SUCCESS!")
 

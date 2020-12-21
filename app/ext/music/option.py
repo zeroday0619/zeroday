@@ -1,9 +1,6 @@
-import asyncio
-import itertools
 import discord
 from discord.ext import commands
-from .performance import run_in_threadpool
-from .filter import safe
+from app.ext.music.filter import safe
 
 
 class VoiceConnectionError(commands.CommandError):
@@ -33,6 +30,7 @@ def ytdl_format_options_a():
 
 
 # -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5
+# -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5
 def ffmpeg_options_a():
     options = {"before_options": "-nostdin", "options": "-vn"}
     return options

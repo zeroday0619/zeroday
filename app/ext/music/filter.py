@@ -1,9 +1,10 @@
-from Utils import config
-from .performance import run_in_threadpool
 import functools
 import pymongo
 import asyncio
 import aiohttp
+
+from Utils import config
+from app.ext.performance import run_in_threadpool
 
 
 class SafetySearch:
@@ -33,6 +34,7 @@ class SafetySearch:
 
     async def adult_filter(self, search: str, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
+
         data = {"query": search}
 
         params_clent = functools.partial(pymongo.MongoClient, self.MongoDB_URL, self.MongoDB_PORT)
@@ -64,7 +66,7 @@ class SafetySearch:
                     return 1
                 else:
                     print("DB 조회\n" + "System Error")
-                    return 2
+                    return 1
             else:
                 mx = await run_in_threadpool(
                     lambda: db.database.find_one({"green": search})
@@ -83,7 +85,7 @@ class SafetySearch:
                         return search
                     else:
                         print("API 사용\nSystem Error")
-                        return 2
+                        return 1
                 else:
                     print("DB 조회 \n 정상")
                     return search

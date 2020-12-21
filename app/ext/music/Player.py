@@ -63,6 +63,7 @@ class Player:
         ctx.bot.loop.create_task(self.player_loop())
 
     async def player_loop(self):
+
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             self.next.clear()
@@ -96,7 +97,7 @@ class Player:
                 )
                     .set_thumbnail(url=self.current.thumbnail)
             )
-
+            print(source)
             self._guild.voice_client.play(
                 source,
                 after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
