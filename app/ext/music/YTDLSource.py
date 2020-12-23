@@ -1,4 +1,5 @@
 import re
+import aiohttp
 import discord
 import asyncio
 import youtube_dl
@@ -68,7 +69,13 @@ class YTDLSource(PCMVolumeTransformer):
     @classmethod
     async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
 
-        block_text = ["빌리와구슬고자", "sex", "shitass", "asshole"]
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url="https://zeroday0619.github.io/ASTI_DB/src/db.json") as resp:
+                if resp.status != 200:
+                    await ctx.send("ASTI DB Connect Failed!")
+                print(f"Connect ASTI database | status code :{resp.status}")
+                nxg = await resp.json()
+        block_text = nxg['word']
 
         for text in list(search.split(" ")):
             for i in range(0, len(block_text)):
