@@ -32,7 +32,7 @@ def cleanText(readData):
     return text
 
 
-class music(Cog):
+class CoreMusic(Cog):
     """뮤직 모듈"""
 
     __slots__ = ("bot", "players")
@@ -97,6 +97,14 @@ class music(Cog):
 
         return player
 
+
+class Music(CoreMusic):
+    """Music"""
+    __slots__ = ("bot", "players")
+
+    def __init__(self, bot: Bot):
+        super(Music, self).__init__(bot)
+
     @commands.group(name="music", aliases=["m"])
     async def _music(self, ctx):
         """
@@ -160,7 +168,6 @@ class music(Cog):
     @_music.command(name="loop", aliases=["lp"])
     async def _loop(self, ctx, mode: str):
         """반복 재생"""
-
         player = self.get_player(ctx)
 
         if not player:
@@ -182,7 +189,6 @@ class music(Cog):
     async def play_(self, ctx, *, search: str):
         """재생"""
         await ctx.trigger_typing()
-
         vc = ctx.voice_client
         if not vc:
             await ctx.invoke(self.connect_)
@@ -218,40 +224,6 @@ class music(Cog):
             source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
             for ix in source:
                 await player.queue.put(ix)
-
-    """
-    @_music.command(name="search")
-    async def _search(self, ctx: commands.Context, *, search: str):
-        async with ctx.typing():
-            try:
-                if checkers.is_url(search):
-                    source = await YTDLSource.search_source(ctx, search, download=False, loop=ctx.bot.loop)
-                else:
-                    sr = search
-                    sear = sr.replace(":", "")
-                    print(sear)
-                    source = await YTDLSource.search_source(ctx, sear, download=False, loop=ctx.bot.loop)
-
-            except YTDLError as e:
-                await ctx.send(f"ERROR: {str(e)}")
-            else:
-                if source == "sel_invalid":
-                    await ctx.send("Invalid selection")
-                elif source == "cancel":
-                    await ctx.send("cancel")
-                elif source == "timeout":
-                    await ctx.send("Timeout")
-                else:
-                    if await adult_filter(search=search, loop=ctx.bot.loop) == 1:
-                        embed_two = EmbedSaftySearch(data=str(search))
-                        await ctx.send(embed=embed_two)
-                    else:
-                        vc = ctx.voice_client
-                        if not vc:
-                            await ctx.invoke(self.connect_)
-                        player = self.get_player(ctx)
-                        await player.queue.put(source)
-    """
 
     @_music.command(name="pause")
     async def pause_(self, ctx):
@@ -408,4 +380,4 @@ class music(Cog):
 
 
 def setup(bot: Bot):
-    bot.add_cog(music(bot))
+    bot.add_cog(Music(bot))

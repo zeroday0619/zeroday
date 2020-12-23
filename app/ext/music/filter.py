@@ -8,9 +8,7 @@ from app.ext.performance import run_in_threadpool
 
 
 class SafetySearch:
-    """
-	BASE Project: https://github.com/zeroday0619/SafetySearch
-	"""
+    """BASE Project: https://github.com/zeroday0619/SafetySearch"""
 
     def __init__(self):
         self.url = "https://openapi.naver.com/v1/search/adult.json"
@@ -50,7 +48,9 @@ class SafetySearch:
             ]
         )
         default_filter = [
-            {"filter_string": "[붕탁]빌리와 구슬고자"}
+            {"filter_string": "[붕탁]빌리와 구슬고자"},
+            {"filter_string": "**A Simple Favor (2018) - Sleeping With My Brother Scene (2/10) | Movieclips**"},
+            {"filter_string": "sex"}
         ]
         await run_in_threadpool(
             lambda: collection.insert_many(default_filter)

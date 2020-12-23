@@ -1,55 +1,29 @@
-from websockets.exceptions import ConnectionClosedError
+from core import *
+from Utils.load_extension import LoadExtension as sync_add_extension
+from Utils.load_extension import AsyncLoadExtension as async_add_extension
+from Utils.discord_presense_task import change_status
 
-try:
-    from core import *
-    from Utils.load_extension import LoadExtension, ReloadExtension, AsyncLoadExtension
-    from Utils.discord_presense_task import change_status
+token = config["Token"]
 
-    token = config["Token"]
+_ext_1 = ["cogs.utils", "cogs.music"]
+_ext_2 = ["Utils.discord_presense_task"]
 
-    async_ext = ["cogs.utils", "cogs.music"]
-    _ext = ["Utils.discord_presense_task"]
-    reload_ext = ["cogs.utils", "cogs.music", "Utils.discord_presense_task"]
 
-    @bot.event
-    async def on_ready():
-        print(
-            "-------------------------------------------------------------------------------"
-        )
-        print(f"[*] Logged is as [{bot.user.name}]")
-        print(f"[*] CID: {str(bot.user.id)}")
-        print(f"[*] zeroday0619 | Copyright (C) 2020 zeroday0619")
-        print(
-            "-------------------------------------------------------------------------------"
-        )
-        print(f'[*] Completed! running the "zeroday" framework')
-        try:
-            await change_status.start()
-        except RuntimeError:
-            print("RUNTIME ERROR..... Reload Extension!")
-            try:
-                ReloadExtension(_cogs=reload_ext)
-            except Exception as ex:
-                print(f"SYSTEM ERROR: {ex}")
-        except ConnectionClosedError as ex:
-            try:
-                ReloadExtension(_cogs=reload_ext)
-            except Exception as ex:
-                print(f"SYSTEM ERROR: {ex}")
-            print(f"NETWORK ERROR: {ex}")
-        except Exception as ex:
-            try:
-                ReloadExtension(_cogs=reload_ext)
-            except Exception as ex:
-                print(f"SYSTEM ERROR: {ex}")
-            print(f"UNKNOWN ERROR: {ex}")
+@bot.event
+async def on_ready():
+    print(
+        "-------------------------------------------------------------------------------"
+    )
+    print(f"[*] Logged is as [{bot.user.name}]")
+    print(f"[*] CID: {str(bot.user.id)}")
+    print(f"[*] zeroday0619 | Copyright (C) 2020 zeroday0619")
+    print(
+        "-------------------------------------------------------------------------------"
+    )
+    print(f'[*] Completed! running the "zeroday" framework')
+    await change_status.start()
 
-    bot.loop.run_in_executor(None, bot.remove_command, "help")
-    AsyncLoadExtension(_cogs=async_ext)
-    LoadExtension(_cogs=_ext)
-    bot.run(token)
-except TypeError:
-    print("\nShutdown SUCCESS!")
-
-except RuntimeError:
-    pass
+bot.remove_command("help")
+async_add_extension(_cogs=_ext_1)
+sync_add_extension(_cogs=_ext_2)
+bot.run(token)

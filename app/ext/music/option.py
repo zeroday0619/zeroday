@@ -58,13 +58,18 @@ embed_value = discord.Embed(
 
 
 def EmbedSaftySearch(data):
+    print(str(data))
     embed_saftyq = discord.Embed(
         title="불법·유해 미디어에 대한 차단 안내",
         url="http://warning.or.kr/",
-        description=f"```ini\n[{str(data)}는 방송통신심의위원회에 의해 차단되었습니다]```",
+        description=f"```ini\n 어허 그러면 안 돼~```",
         color=discord.Color.blurple(),
     ).set_image(
-        url="https://tistory3.daumcdn.net/tistory/3062381/skin/images/warnning.png"
+        url="https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Ft1.daumcdn.net%2Fcfile%2Ftistory%2F99A514435E636A6716"
+    ).add_field(
+        name="Blocked words", value=str(data.strip()), inline=False
+    ).set_footer(
+        text="Safe Search | Version: alpha 1.0.0", icon_url="https://cdn.imgbin.com/23/8/2/imgbin-google-safe-browsing-web-browser-malware-safe-yPAFE8aZ6VYPygxttJYmr5qkS.jpg"
     )
     return embed_saftyq
 
