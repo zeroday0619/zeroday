@@ -65,7 +65,7 @@ def EmbedSaftySearch(data):
         description=f"```ini\n어허 그러면 안 돼~```",
         color=discord.Color.blurple(),
     ).set_image(
-        url="https://media.tenor.co/videos/2bd04907690989615a243b2c9f2aba40/mp4"
+        url="https://media.discordapp.net/attachments/712358830649901078/791636255472746506/unknown.png"
     ).add_field(
         name="Blocked words", value=str(data.strip()), inline=False
     ).set_footer(
