@@ -99,7 +99,7 @@ class YTDLSource(PCMVolumeTransformer):
         for text in list(data["title"].replace("(", "").replace(")", "").split()):
             for i in range(0, len(block_text)):
                 print(f"B Check: {i}")
-                if bool(re.search(text.strip(), block_text[i])):
+                if bool(re.fullmatch(text.strip(), block_text[i])):
                     print("차단 B")
                     embed_two = EmbedSaftySearch(data=str(text.strip()))
                     await ctx.send(embed=embed_two)
