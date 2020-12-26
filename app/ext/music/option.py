@@ -61,10 +61,10 @@ def EmbedSaftySearch(data):
     embed_saftyq = discord.Embed(
         title="불법·유해 미디어에 대한 차단 안내",
         url="http://warning.or.kr/",
-        description=f"```ini\n 어허 그러면 안 돼~```",
+        description=f"```ini\n어허 그러면 안 돼~```",
         color=discord.Color.blurple(),
     ).set_image(
-        url="https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Ft1.daumcdn.net%2Fcfile%2Ftistory%2F99A514435E636A6716"
+        url="https://media.discordapp.net/attachments/712358830649901078/791639097911279636/unknown.png"
     ).add_field(
         name="Blocked words", value=str(data.strip()), inline=False
     ).set_footer(
