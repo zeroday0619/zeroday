@@ -76,8 +76,9 @@ class YTDLSource(PCMVolumeTransformer):
                 print(f"Connect ASTI database | status code :{resp.status}")
                 nxg = await resp.json()
         block_text = nxg['word']
+        print(block_text)
 
-        for text in list(search.split(" ")):
+        for text in list(search.replace("(", "").replace(")", "").split(" ")):
             for i in range(0, len(block_text)):
                 print(f"A Check: {i}")
                 if bool(re.search(text.strip(), block_text[i])):
@@ -95,27 +96,27 @@ class YTDLSource(PCMVolumeTransformer):
         if "entries" in data:
             data = data["entries"][0]
 
-        for text in list(data["title"].split(" ")):
+        for text in list(data["title"].replace("(", "").replace(")", "").split()):
             for i in range(0, len(block_text)):
                 print(f"B Check: {i}")
-                if bool(re.fullmatch(text.strip(), block_text[i])):
+                if bool(re.search(text.strip(), block_text[i])):
                     print("차단 B")
                     embed_two = EmbedSaftySearch(data=str(text.strip()))
                     await ctx.send(embed=embed_two)
                     return None
 
-        for text in list(data['title'].split(" ")):
-            print(text)
+        for text in list(data['title'].replace("(", "").replace(")", "").split()):
             if await adult_filter(search=str(text.strip()), loop=ctx.bot.loop) == 1:
                 print("차단 E")
                 embed_two = EmbedSaftySearch(data=str(data["title"]))
                 await ctx.send(embed=embed_two)
                 return None
 
-        if await adult_filter(search=str(data["title"]), loop=ctx.bot.loop) == 1:
+        if await adult_filter(search=str(data["title"].replace("(", "").replace(")", "")), loop=ctx.bot.loop) == 1:
             print("차단 F")
             embed_two = EmbedSaftySearch(data=str(data["title"]))
             await ctx.send(embed=embed_two)
+            return None
 
         if msg:
             await ctx.send(

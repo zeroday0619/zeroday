@@ -18,13 +18,12 @@ def ytdl_format_options_a():
         "restrictfilenames": True,
         "noplaylist": True,
         "nocheckcertificate": True,
-        "ignoreerrors": False,
+        "ignoreerrors": True,
         "logtostderr": False,
         "quiet": True,
         "no_warnings": True,
         "default_search": "auto",
-        "source_address": "0.0.0.0",
-        "age-limit": 17
+        "source_address": "0.0.0.0"
     }
     return options
 

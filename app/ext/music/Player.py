@@ -30,10 +30,7 @@ class SongQueue(asyncio.Queue):
 
 
 class Player:
-    """
-	Base class for Music Player
-	"""
-
+    """Base class for Music Player"""
     __slots__ = (
         "bot",
         "_guild",
@@ -63,7 +60,6 @@ class Player:
         ctx.bot.loop.create_task(self.player_loop())
 
     async def player_loop(self):
-
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             self.next.clear()
