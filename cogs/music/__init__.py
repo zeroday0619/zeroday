@@ -22,6 +22,8 @@ from app.ext.music.option import (
     VoiceConnectionError,
 )
 
+__version__ = "3.5.0"
+
 
 class YTDLError(Exception):
     pass
@@ -40,8 +42,8 @@ class CoreMusic(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.players = {}
-        self.buildVer = "3.4.1"
-        self.verstring = "Ver"
+        self.cog_version = __version__
+        self.ver_string = "Ver"
 
     async def cleanup(self, guild):
         try:
@@ -52,10 +54,6 @@ class CoreMusic(Cog):
         try:
             for source in self.players[guild.id].queue._queue:
                 source.cleanup()
-        except KeyError as e:
-            print(f"{e.__class__.__module__}: {e.__class__.__name__}")
-
-        try:
             del self.players[guild.id]
         except KeyError as e:
             print(f"{e.__class__.__module__}: {e.__class__.__name__}")
@@ -80,6 +78,7 @@ class CoreMusic(Cog):
             )
 
         await ctx.send("ERROR: Ignoring exception in command {}".format(ctx.command))
+
         print("Ignoring exception in command {}".format(ctx.command), file=sys.stderr)
         traceback.print_exception(
             type(error), error, error.__traceback__, file=sys.stderr
@@ -104,6 +103,59 @@ class Music(CoreMusic):
 
     def __init__(self, bot: Bot):
         super(Music, self).__init__(bot)
+
+    @staticmethod
+    async def check(ctx, search):
+        if checkers.is_url(search):
+            source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
+            return source
+        else:
+            search_text = search
+            serc = search_text.replace(":", "")
+            source = await YTDLSource.Search(ctx, serc, download=False, loop=ctx.bot.loop)
+            return source
+
+    async def pause_embed(self, ctx):
+        nx = discord.Embed(
+            title="Music",
+            description=f"```css\n{ctx.author} : 일시중지.\n```",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.ver_string, value=self.cog_version)
+        return nx
+
+    async def resume_embed(self, ctx):
+        nx = discord.Embed(
+            title="Music",
+            description=f"```css\n**{ctx.author}** : 다시재생.\n```",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.ver_string, value=self.cog_version)
+        return nx
+
+    async def volume_embed(self, ctx, vol):
+        ix = discord.Embed(
+            title="Music",
+            description=f"```{ctx.author}: Set the volume to {vol}%```",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.ver_string, value=self.cog_version)
+        return ix
+
+    async def now_playing_embed(self, vc):
+        ex = discord.Embed(
+            title=f"Now Playing: ```{vc.source.title}```",
+            description=f"requested by @{vc.source.requester}",
+            color=discord.Color.blurple(),
+        ).add_field(name=self.ver_string, value=self.cog_version)
+        return ex
+
+    async def queue_info_embed(self, player):
+        upcoming = list(itertools.islice(player.queue._queue, 0, 50))
+        fmt = "\n".join(f'```css\n{_["title"]}\n```' for _ in upcoming)
+        embed_queue = discord.Embed(
+            title=f"Upcoming - Next **{len(upcoming)}**",
+            description=fmt,
+            color=discord.Color.blurple(),
+        ).add_field(name=self.ver_string, value=self.cog_version)
+        return embed_queue
 
     @commands.group(name="music", aliases=["m"])
     async def _music(self, ctx):
@@ -192,13 +244,10 @@ class Music(CoreMusic):
         vc = ctx.voice_client
         if not vc:
             await ctx.invoke(self.connect_)
+
         player = self.get_player(ctx)
-        if checkers.is_url(search):
-            source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
-        else:
-            search_text = search
-            serc = search_text.replace(":", "")
-            source = await YTDLSource.Search(ctx, serc, download=False, loop=ctx.bot.loop)
+
+        source = await self.check(ctx=ctx, search=search)
 
         if await adult_filter(search=source.title, loop=ctx.bot.loop) == 1:
             embed_two = EmbedSaftySearch(data=str(search))
@@ -233,14 +282,11 @@ class Music(CoreMusic):
             return await ctx.send(embed=embed_ERROR, delete_after=20)
         elif vc.is_paused():
             return
-        embed_pause = discord.Embed(
-            title="Music",
-            description=f"```css\n{ctx.author} : 일시중지.\n```",
-            color=discord.Color.blurple(),
-        ).add_field(name=self.verstring, value=self.buildVer)
 
+        nx = self.pause_embed(ctx=ctx)
         vc.pause()
-        await ctx.send(embed=embed_pause, delete_after=5)
+
+        await ctx.send(embed=nx, delete_after=5)
 
     @_music.command(name="resume")
     async def resume_(self, ctx):
@@ -252,14 +298,10 @@ class Music(CoreMusic):
         elif not vc.is_paused():
             return
 
+        nx = self.resume_embed(ctx=ctx)
         vc.resume()
-        embed_resume = discord.Embed(
-            title="Music",
-            description=f"```css\n**{ctx.author}** : 다시재생.\n```",
-            color=discord.Color.blurple(),
-        ).add_field(name=self.verstring, value=self.buildVer)
 
-        await ctx.send(embed_resume, delete_after=5)
+        await ctx.send(nx, delete_after=5)
 
     @_music.command(name="skip")
     async def skip_(self, ctx):
@@ -308,18 +350,11 @@ class Music(CoreMusic):
         if player.queue.empty():
             return await ctx.send(embed=embed_queued)
 
-        upcoming = list(itertools.islice(player.queue._queue, 0, 50))
-        fmt = "\n".join(f'```css\n{_["title"]}\n```' for _ in upcoming)
-        embed_queue = discord.Embed(
-            title=f"Upcoming - Next **{len(upcoming)}**",
-            description=fmt,
-            color=discord.Color.blurple(),
-        ).add_field(name=self.verstring, value=self.buildVer)
-
-        await ctx.send(embed=embed_queue)
+        ox = await self.queue_info_embed(player=player)
+        await ctx.send(embed=ox)
 
     @_music.command(
-        name="now_playing", aliases=["np", "current", "currentsong", "playing"]
+        name="now_playing", aliases=["np", "current", "playing"]
     )
     async def now_playing_(self, ctx):
         """재생중인 컨텐츠 정보 보기"""
@@ -336,12 +371,9 @@ class Music(CoreMusic):
             await player.np.delete()
         except discord.HTTPException:
             pass
-        embed_now_playing = discord.Embed(
-            title=f"Now Playing: ```{vc.source.title}```",
-            description=f"requested by @{vc.source.requester}",
-            color=discord.Color.blurple(),
-        ).add_field(name=self.verstring, value=self.buildVer)
-        player.np = await ctx.send(embed=embed_now_playing)
+
+        ex = await self.now_playing_embed(vc=vc)
+        player.np = await ctx.send(embed=ex)
 
     @_music.command(name="volume", aliases=["vol"])
     async def change_volume(self, ctx, *, vol: float):
@@ -360,13 +392,8 @@ class Music(CoreMusic):
             vc.source.volume = vol / 100
 
         player.volume = vol / 100
-        embed_now_playing = discord.Embed(
-            title="Music",
-            description=f"```{ctx.author}: Set the volume to {vol}%```",
-            color=discord.Color.blurple(),
-        ).add_field(name=self.verstring, value=self.buildVer)
-
-        await ctx.send(embed=embed_now_playing, delete_after=10)
+        ix = await self.volume_embed(ctx=ctx, vol=vol)
+        await ctx.send(embed=ix, delete_after=10)
 
     @_music.command(name="stop")
     async def stop_(self, ctx):

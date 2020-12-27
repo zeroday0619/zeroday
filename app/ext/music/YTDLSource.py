@@ -43,6 +43,39 @@ class YTDLSource(PCMVolumeTransformer):
         return self.__getattribute__(item)
 
     @classmethod
+    async def LoadASTI_DB(cls, ctx) -> list:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url="https://zeroday0619.github.io/ASTI_DB/src/db.json") as resp:
+                if resp.status != 200:
+                    await ctx.send("ASTI DB Connect Failed!")
+                print(f"Connect ASTI database | status code : {resp.status}")
+                nxg = await resp.json()
+            block_text = nxg['word']
+        return block_text
+
+    @classmethod
+    async def next_generation_filter(cls, ctx, search_source: str):
+        block_text = await cls.LoadASTI_DB(ctx=ctx)
+        for text in list(search_source.replace("(", "").replace(")", "").split(" ")):
+            for i in range(0, len(block_text)):
+                print(f"A Check: {i}")
+                if bool(re.fullmatch(text.strip(), block_text[i])):
+                    embed_two = EmbedSaftySearch(data=str(text.strip()))
+                    await ctx.send(embed=embed_two)
+                    return True
+        return False
+
+    @classmethod
+    async def naver_filter(cls, ctx, search_source: str):
+        for text in list(search_source.replace("(", "").replace(")", "").split()):
+            if await adult_filter(search=str(text.strip()), loop=ctx.bot.loop) == 1:
+                print("차단 E")
+                embed_two = EmbedSaftySearch(data=str(text.strip()))
+                await ctx.send(embed=embed_two)
+                return True
+        return False
+
+    @classmethod
     async def create_playlist(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
         params_data = partial(ytdl.extract_info, url=search, download=download)
@@ -69,25 +102,9 @@ class YTDLSource(PCMVolumeTransformer):
     @classmethod
     async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url="https://zeroday0619.github.io/ASTI_DB/src/db.json") as resp:
-                if resp.status != 200:
-                    await ctx.send("ASTI DB Connect Failed!")
-                print(f"Connect ASTI database | status code :{resp.status}")
-                nxg = await resp.json()
-        block_text = nxg['word']
-        print(block_text)
-
-        for text in list(search.replace("(", "").replace(")", "").split(" ")):
-            for i in range(0, len(block_text)):
-                print(f"A Check: {i}")
-                if bool(re.search(text.strip(), block_text[i])):
-                    print("차단 A")
-                    embed_two = EmbedSaftySearch(data=str(text.strip()))
-                    await ctx.send(embed=embed_two)
-                    return None
-
-            print("pass")
+        if await cls.next_generation_filter(ctx=ctx, search_source=search):
+            print(f"Detected: {search}")
+            return None
 
         loop = loop or asyncio.get_event_loop()
         params_data = partial(ytdl.extract_info, url=str(search), download=download)
@@ -96,21 +113,13 @@ class YTDLSource(PCMVolumeTransformer):
         if "entries" in data:
             data = data["entries"][0]
 
-        for text in list(data["title"].replace("(", "").replace(")", "").split()):
-            for i in range(0, len(block_text)):
-                print(f"B Check: {i}")
-                if bool(re.fullmatch(text.strip(), block_text[i])):
-                    print("차단 B")
-                    embed_two = EmbedSaftySearch(data=str(text.strip()))
-                    await ctx.send(embed=embed_two)
-                    return None
+        if await cls.next_generation_filter(ctx=ctx, search_source=data['title']):
+            print(f"Detected: {data['title']}")
+            return None
 
-        for text in list(data['title'].replace("(", "").replace(")", "").split()):
-            if await adult_filter(search=str(text.strip()), loop=ctx.bot.loop) == 1:
-                print("차단 E")
-                embed_two = EmbedSaftySearch(data=str(data["title"]))
-                await ctx.send(embed=embed_two)
-                return None
+        if await cls.naver_filter(ctx=ctx, search_source=data['title']):
+            print(f"Detected: {data['title']}")
+            return None
 
         if await adult_filter(search=str(data["title"].replace("(", "").replace(")", "")), loop=ctx.bot.loop) == 1:
             print("차단 F")
@@ -163,5 +172,5 @@ class YTDLSource(PCMVolumeTransformer):
             value = ", ".join(duration)
 
         elif duration == 0:
-            value = "LIVE BETA"
+            value = "LIVE STREAM"
         return value
