@@ -17,6 +17,11 @@ youtube_dl.utils.bug_reports_message = lambda: ""
 ytdl = YoutubeDL(ytdl_format_options)
 
 
+def cleanText(readData):
+    text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', readData)
+    return text
+
+
 class YTDLSource(PCMVolumeTransformer):
     FFMPEG_OPTIONS = {
         "before_options": "-reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5",
@@ -56,7 +61,7 @@ class YTDLSource(PCMVolumeTransformer):
     @classmethod
     async def next_generation_filter(cls, ctx, search_source: str):
         block_text = await cls.LoadASTI_DB(ctx=ctx)
-        for text in list(search_source.replace("(", "").replace(")", "").split(" ")):
+        for text in list(cleanText(search_source).split()):
             for i in range(0, len(block_text)):
                 print(f"A Check: {i}")
                 if bool(re.fullmatch(text.strip(), block_text[i])):
@@ -67,7 +72,7 @@ class YTDLSource(PCMVolumeTransformer):
 
     @classmethod
     async def naver_filter(cls, ctx, search_source: str):
-        for text in list(search_source.replace("(", "").replace(")", "").split()):
+        for text in list(cleanText(search_source).split()):
             if await adult_filter(search=str(text.strip()), loop=ctx.bot.loop) == 1:
                 print("차단 E")
                 embed_two = EmbedSaftySearch(data=str(text.strip()))
@@ -121,7 +126,7 @@ class YTDLSource(PCMVolumeTransformer):
             print(f"Detected: {data['title']}")
             return None
 
-        if await adult_filter(search=str(data["title"].replace("(", "").replace(")", "")), loop=ctx.bot.loop) == 1:
+        if await adult_filter(search=str(cleanText(data["title"])), loop=ctx.bot.loop) == 1:
             print("차단 F")
             embed_two = EmbedSaftySearch(data=str(data["title"]))
             await ctx.send(embed=embed_two)

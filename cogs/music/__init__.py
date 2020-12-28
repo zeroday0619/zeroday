@@ -249,7 +249,7 @@ class Music(CoreMusic):
 
         source = await self.check(ctx=ctx, search=search)
 
-        if await adult_filter(search=source.title, loop=ctx.bot.loop) == 1:
+        if await adult_filter(search=cleanText(source.title), loop=ctx.bot.loop) == 1:
             embed_two = EmbedSaftySearch(data=str(search))
             await ctx.send(embed=embed_two)
             await self.cleanup(ctx.guild)
@@ -265,7 +265,7 @@ class Music(CoreMusic):
         if not vc:
             await ctx.invoke(self.connect_)
 
-        if await adult_filter(search=search, loop=ctx.bot.loop) == 1:
+        if await adult_filter(search=cleanText(search), loop=ctx.bot.loop) == 1:
             embed_two = EmbedSaftySearch(data=str(search))
             await ctx.send(embed=embed_two)
         else:
