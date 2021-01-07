@@ -4,7 +4,7 @@ import traceback
 import itertools
 import re
 import sys
-
+from discord.ext.commands import Context
 from validator_collection import checkers
 from discord.ext import commands
 from discord.ext.commands import Bot
@@ -232,9 +232,10 @@ class Music(CoreMusic):
             )
 
         if mode == "disable":
-            player.repeat = None
+            player.loop = False
         else:
-            player.repeat = mode
+            player.loop = True
+
         await ctx.send(f"Player repeat: **{mode}**", delete_after=5)
 
     @_music.command(name="play", aliases=["music", "p"])

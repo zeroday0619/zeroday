@@ -1,12 +1,20 @@
-from core import *
-from Utils.load_extension import LoadExtension as sync_add_extension
-from Utils.load_extension import AsyncLoadExtension as async_add_extension
-from Utils.discord_presense_task import change_status
+import discord
+from itertools import cycle
+from discord.ext import tasks
+from app.controller import bot
 
-token = config["Token"]
 
-_ext_1 = ["cogs.utils", "cogs.music"]
-_ext_2 = ["Utils.discord_presense_task"]
+presence_message = ["!help", "Ver 3.5"]
+extension_list = ["cogs.utils", "cogs.music", "cogs.system"]
+
+presence = cycle(presence_message)
+
+
+@tasks.loop(seconds=10)
+async def change_status():
+    await bot.change_presence(
+        status=discord.Status.online, activity=discord.Game(next(presence))
+    )
 
 
 @bot.event
@@ -23,7 +31,7 @@ async def on_ready():
     print(f'[*] Completed! running the "zeroday" framework')
     await change_status.start()
 
+
 bot.remove_command("help")
-async_add_extension(_cogs=_ext_1)
-sync_add_extension(_cogs=_ext_2)
-bot.run(token)
+bot.load_extensions(extension_list)
+bot.launch()

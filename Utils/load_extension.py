@@ -1,8 +1,8 @@
-from core import *
+from app.controller import bot
 from typing import List
 
 
-def LoadExtension(_cogs: List[str]):
+def load_extension(_cogs: List[str]):
     for extension in _cogs:
         try:
             bot.load_extension(extension)
@@ -11,19 +11,10 @@ def LoadExtension(_cogs: List[str]):
             print(f"Failed to load extension {extension}: {ex}")
 
 
-def ReloadExtension(_cogs: List[str]):
+def reload_extension(_cogs: List[str]):
     for extension in _cogs:
         try:
             bot.reload_extension(extension)
             print(f"Successfully reloaded {extension}")
         except Exception as ex:
             print(f"Failed to reload extension {extension}: {ex}")
-
-
-def AsyncLoadExtension(_cogs: List[str]):
-    for extension in _cogs:
-        try:
-            bot.loop.run_in_executor(None, bot.load_extension, extension)
-            print(f"Successfully loaded {extension}")
-        except Exception as ex:
-            print(f"Failed to load extension {extension}: {ex}")

@@ -4,7 +4,7 @@ import os
 from discord.ext import tasks
 from discord.ext import commands
 from .weather_api import WeatherAPI
-from core import bot
+from app.controller import bot
 
 
 class ABCDE:

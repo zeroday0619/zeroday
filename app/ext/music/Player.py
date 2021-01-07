@@ -3,10 +3,14 @@ import discord
 import random
 import itertools
 from async_timeout import timeout
+from discord.ext.commands import Context
+from discord import Guild
 from .YTDLSource import YTDLSource
 
 
 class SongQueue(asyncio.Queue):
+    _queue: list
+
     def __getitem__(self, item):
         if isinstance(item, slice):
             return list(itertools.islice(self._queue, item.start, item.stop, item.step))
@@ -40,24 +44,66 @@ class Player:
         "next",
         "current",
         "np",
-        "volume",
         "repeat",
+        "_volume",
+        "_loop"
     )
 
-    def __init__(self, ctx):
+    def __init__(self, ctx: Context):
         self.bot = ctx.bot
-        self._guild = ctx.guild
+        self._guild: Guild = ctx.guild
         self._channel = ctx.channel
         self._cog = ctx.cog
 
         self.queue = SongQueue()
         self.next = asyncio.Event()
+        self._volume = 0.5
 
         self.np = None
-        self.volume = 0.5
         self.current = None
-        self.repeat = False
+        self._loop = False
         ctx.bot.loop.create_task(self.player_loop())
+
+    @property
+    def loop(self):
+        return self._loop
+
+    @loop.setter
+    def loop(self, value: bool):
+        self._loop = value
+
+    @property
+    def volume(self):
+        return self._volume
+
+    @volume.setter
+    def volume(self, volume: float):
+        self._volume = volume
+
+    @property
+    def is_playing(self):
+        return self.np and self.current
+
+    @staticmethod
+    async def create_embed(source, duration, requester, current, thumbnail):
+        embed = (
+            discord.Embed(
+                title="Now playing",
+                description="```css\n{0.title}\n```".format(source),
+                color=discord.Color.blurple(),
+            )
+                .add_field(name="Duration", value=duration)
+                .add_field(name="Requested by", value=requester)
+                .add_field(
+                name="Uploader",
+                value="[{0.uploader}]({0.uploader_url})".format(current),
+            )
+                .add_field(
+                name="URL", value="[Click]({0.web_url})".format(current)
+            )
+                .set_thumbnail(url=thumbnail)
+        )
+        return embed
 
     async def player_loop(self):
         await self.bot.wait_until_ready()
@@ -74,35 +120,26 @@ class Player:
 
             source.volume = self.volume
             self.current = source
-            print(self.current.thumbnail)
 
-            embed = (
-                discord.Embed(
-                    title="Now playing",
-                    description="```css\n{0.title}\n```".format(source),
-                    color=discord.Color.blurple(),
-                )
-                    .add_field(name="Duration", value=self.current.duration)
-                    .add_field(name="Requested by", value=self.current.requester)
-                    .add_field(
-                    name="Uploader",
-                    value="[{0.uploader}]({0.uploader_url})".format(self.current),
-                )
-                    .add_field(
-                    name="URL", value="[Click]({0.web_url})".format(self.current)
-                )
-                    .set_thumbnail(url=self.current.thumbnail)
-            )
-            print(source)
             self._guild.voice_client.play(
                 source,
                 after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
             )
-            self.np = await self._channel.send(embed=embed)
+
+            embed = await self.create_embed(
+                source=source,
+                duration=self.current.duration,
+                requester=self.current.requester,
+                current=self.current,
+                thumbnail=self.current.thumbnail
+            )
+
+            self.np = await self._channel.send(
+                embed=embed
+            )
 
             await self.next.wait()
-
-            if self.repeat:
+            if self.loop:
                 ctx = await self.bot.get_context(self.np)
                 ctx.author = source.requester
                 search = source.web_url
@@ -117,15 +154,22 @@ class Player:
                     )
                     continue
 
-                if self.repeat == "current":
+                if self.loop:
                     self.queue._queue.appendleft(source_repeat)
                 else:
                     await self.queue.put(source_repeat)
 
             try:
-                await self.np.delete()
-            except discord.HTTPException:
+                if not self.is_playing:
+                    await self.np.delete()
+            except discord.HTTPExceptions:
                 pass
+
+    async def stop(self):
+        self.queue.clear()
+        if self.np:
+            await self._guild.voice_client.disconnect()
+            self.np = None
 
     def destroy(self, guild):
         # Disconnect and Cleanup
