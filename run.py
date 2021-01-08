@@ -7,7 +7,7 @@ from app.controller.logger import Logger
 logger = Logger.generate_log()
 
 presence_message = ["!help", "Ver 3.5"]
-extension_list = ["cogs.utils", "cogs.music", "cogs.system"]
+extension_list = ["cogs.utils", "cogs.music", "cogs.system", "extensions.minecraft"]
 
 presence = cycle(presence_message)
 
