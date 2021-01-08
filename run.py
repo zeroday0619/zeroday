@@ -2,7 +2,9 @@ import discord
 from itertools import cycle
 from discord.ext import tasks
 from app.controller import bot
+from app.controller.logger import Logger
 
+logger = Logger.generate_log()
 
 presence_message = ["!help", "Ver 3.5"]
 extension_list = ["cogs.utils", "cogs.music", "cogs.system"]
@@ -17,18 +19,15 @@ async def change_status():
     )
 
 
+@Logger.set()
 @bot.event
 async def on_ready():
-    print(
-        "-------------------------------------------------------------------------------"
-    )
-    print(f"[*] Logged is as [{bot.user.name}]")
-    print(f"[*] CID: {str(bot.user.id)}")
-    print(f"[*] zeroday0619 | Copyright (C) 2020 zeroday0619")
-    print(
-        "-------------------------------------------------------------------------------"
-    )
-    print(f'[*] Completed! running the "zeroday" framework')
+    logger.info("------------------------------------------------------------")
+    logger.info(f"[*] Logged is as [{bot.user.name}]")
+    logger.info(f"[*] CID: {str(bot.user.id)}")
+    logger.info(f"[*] zeroday0619 | Copyright (C) 2021 zeroday0619")
+    logger.info("------------------------------------------------------------")
+    logger.info(f'[*] Completed!')
     await change_status.start()
 
 

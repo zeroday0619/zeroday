@@ -12,17 +12,21 @@ from app.ext.performance import run_in_threadpool
 from app.ext.music.option import ytdl_format_options
 from app.ext.music.option import EmbedSaftySearch
 from app.ext.music.option import adult_filter
+from app.controller.logger import Logger
+
 
 youtube_dl.utils.bug_reports_message = lambda: ""
 ytdl = YoutubeDL(ytdl_format_options)
 
 
+@Logger.set()
 def cleanText(readData):
     text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', readData)
     return text
 
 
 class YTDLSource(PCMVolumeTransformer):
+    logger = Logger.generate_log()
     FFMPEG_OPTIONS = {
         "before_options": "-reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5",
         "options": "-vn",
@@ -31,6 +35,7 @@ class YTDLSource(PCMVolumeTransformer):
     def __init__(self, source, *, data, requester):
 
         super().__init__(source)
+        self.logger = Logger.generate_log()
         self.requester = requester
         self.filename = ytdl.prepare_filename(data)
 
@@ -50,22 +55,24 @@ class YTDLSource(PCMVolumeTransformer):
         return self.__getattribute__(item)
 
     @classmethod
+    @Logger.set()
     async def LoadASTI_DB(cls, ctx) -> list:
         async with aiohttp.ClientSession() as session:
             async with session.get(url="https://zeroday0619.github.io/ASTI_DB/src/db.json") as resp:
                 if resp.status != 200:
                     await ctx.send("ASTI DB Connect Failed!")
-                print(f"Connect ASTI database | status code : {resp.status}")
+                cls.logger.info(f"Connect ASTI database | status code : {resp.status}")
                 nxg = await resp.json()
             block_text = nxg['word']
         return block_text
 
     @classmethod
+    @Logger.set()
     async def next_generation_filter(cls, ctx, search_source: str):
         block_text = await cls.LoadASTI_DB(ctx=ctx)
         for text in list(cleanText(search_source).split()):
             for i in range(0, len(block_text)):
-                print(f"A Check: {i}")
+                cls.logger.info(f"Check: {i}")
                 if bool(re.fullmatch(text.strip(), block_text[i])):
                     embed_two = EmbedSaftySearch(data=str(text.strip()))
                     await ctx.send(embed=embed_two)
@@ -73,16 +80,18 @@ class YTDLSource(PCMVolumeTransformer):
         return False
 
     @classmethod
+    @Logger.set()
     async def naver_filter(cls, ctx, search_source: str):
         for text in list(cleanText(search_source).split()):
             if await adult_filter(search=str(text.strip()), loop=ctx.bot.loop) == 1:
-                print("차단 E")
+                cls.logger.info(f"차단: {text.strip()}")
                 embed_two = EmbedSaftySearch(data=str(text.strip()))
                 await ctx.send(embed=embed_two)
                 return True
         return False
 
     @classmethod
+    @Logger.set()
     async def create_playlist(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
         params_data = partial(ytdl.extract_info, url=search, download=download)
@@ -107,10 +116,11 @@ class YTDLSource(PCMVolumeTransformer):
         return songs
 
     @classmethod
+    @Logger.set()
     async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
 
         if await cls.next_generation_filter(ctx=ctx, search_source=search):
-            print(f"Detected: {search}")
+            cls.logger.info(f"Detected: {search}")
             return None
 
         loop = loop or asyncio.get_event_loop()
@@ -121,15 +131,15 @@ class YTDLSource(PCMVolumeTransformer):
             data = data["entries"][0]
 
         if await cls.next_generation_filter(ctx=ctx, search_source=data['title']):
-            print(f"Detected: {data['title']}")
+            cls.logger.info(f"Detected: {data['title']}")
             return None
 
         if await cls.naver_filter(ctx=ctx, search_source=data['title']):
-            print(f"Detected: {data['title']}")
+            cls.logger.info(f"Detected: {data['title']}")
             return None
 
         if await adult_filter(search=str(cleanText(data["title"])), loop=ctx.bot.loop) == 1:
-            print("차단 F")
+            cls.logger.info(f"차단: {data['title']}")
             embed_two = EmbedSaftySearch(data=str(data["title"]))
             await ctx.send(embed=embed_two)
             return None
@@ -147,6 +157,7 @@ class YTDLSource(PCMVolumeTransformer):
         )
 
     @classmethod
+    @Logger.set()
     async def regather_stream(cls, ctx, *, download=False):
         data = await run_in_threadpool(
             lambda: ytdl.extract_info(url=data["webpage_url"], download=download)
@@ -158,6 +169,7 @@ class YTDLSource(PCMVolumeTransformer):
         )
 
     @staticmethod
+    @Logger.set()
     def parse_duration(duration: int):
         value = None
         if duration > 0:

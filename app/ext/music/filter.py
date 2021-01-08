@@ -5,12 +5,15 @@ import aiohttp
 
 from Utils import config
 from app.ext.performance import run_in_threadpool
+from app.controller.logger import Logger
 
 
 class SafetySearch:
     """BASE Project: https://github.com/zeroday0619/SafetySearch"""
 
     def __init__(self):
+        self.logger = Logger.generate_log()
+
         self.url = "https://openapi.naver.com/v1/search/adult.json"
         self.safty_msg = "해당 검색어는 Safety Search 에 의해 사용하실수 없습니다."
 
@@ -24,12 +27,14 @@ class SafetySearch:
             "X-Naver-Client-Secret": config["X-Naver-Client-Secret"],
         }
 
+    @Logger.set()
     async def requests(self, data):
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.get(url=self.url, params=data) as resp:
                 result = await resp.json()
         return result
 
+    @Logger.set()
     async def adult_filter(self, search: str, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
 
@@ -62,10 +67,10 @@ class SafetySearch:
             if mo != None:
                 check = mo["filter_string"]
                 if check == search:
-                    print("DB 조회\n" + self.safty_msg)
+                    self.logger.info("DATABASE FILTER: " + self.safty_msg)
                     return 1
                 else:
-                    print("DB 조회\n" + "System Error")
+                    self.logger.error("DATABASE FILTER: " + "System Error")
                     return 1
             else:
                 mx = await run_in_threadpool(
@@ -74,23 +79,23 @@ class SafetySearch:
                 if mx == None:
                     resp = await self.requests(data)
                     if resp["adult"] == "1":
-                        print("API 사용\n" + self.safty_msg)
+                        self.logger.info("NAVER SEARCH API: " + self.safty_msg)
                         query = [{"filter_string": search}]
                         await run_in_threadpool(lambda: collection.insert_many(query))
                         return 1
                     elif resp["adult"] == "0":
-                        print("API 사용\n정상")
+                        self.logger.info("NAVER SEARCH API: 정상")
                         query2 = [{"green": search}]
                         await run_in_threadpool(lambda: collection.insert_many(query2))
                         return search
                     else:
-                        print("API 사용\nSystem Error")
+                        self.logger.error("NAVER SEARCH API: Error")
                         return 1
                 else:
-                    print("DB 조회 \n 정상")
+                    self.logger.info("DATABASE FILTER: 정상")
                     return search
         except Exception as ex:
-            print(ex)
+            self.logger.error(ex)
             pass
 
 

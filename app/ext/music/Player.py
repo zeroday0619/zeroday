@@ -2,10 +2,12 @@ import asyncio
 import discord
 import random
 import itertools
+
 from async_timeout import timeout
 from discord.ext.commands import Context
 from discord import Guild
 from .YTDLSource import YTDLSource
+from app.controller.logger import Logger
 
 
 class SongQueue(asyncio.Queue):
@@ -46,10 +48,12 @@ class Player:
         "np",
         "repeat",
         "_volume",
-        "_loop"
+        "_loop",
+        "logger"
     )
 
     def __init__(self, ctx: Context):
+        self.logger = Logger.generate_log()
         self.bot = ctx.bot
         self._guild: Guild = ctx.guild
         self._channel = ctx.channel
@@ -85,6 +89,7 @@ class Player:
         return self.np and self.current
 
     @staticmethod
+    @Logger.set()
     async def create_embed(source, duration, requester, current, thumbnail):
         embed = (
             discord.Embed(
@@ -105,6 +110,7 @@ class Player:
         )
         return embed
 
+    @Logger.set()
     async def player_loop(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
@@ -149,8 +155,9 @@ class Player:
                         ctx, search, download=False, msg=False
                     )
                 except Exception as e:
+                    self.logger.error(f"There was an error processing your song. {e}")
                     await self._channel.send(
-                        f"There was an error procecsing your song.\n ```css\n[{e}]\n```"
+                        f"There was an error processing your song.\n ```css\n[{e}]\n```"
                     )
                     continue
 
@@ -162,15 +169,17 @@ class Player:
             try:
                 if not self.is_playing:
                     await self.np.delete()
-            except discord.HTTPExceptions:
+            except discord.HTTPException:
                 pass
 
+    @Logger.set()
     async def stop(self):
         self.queue.clear()
         if self.np:
             await self._guild.voice_client.disconnect()
             self.np = None
 
+    @Logger.set()
     def destroy(self, guild):
         # Disconnect and Cleanup
         return self.bot.loop.create_task(self._cog.cleanup(guild))

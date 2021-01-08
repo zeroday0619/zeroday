@@ -1,7 +1,6 @@
 import json
 from app.service import Core
 
-
 with open("config.json", "r", encoding="utf-8") as _config:
     config: dict = json.load(_config)
 

@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from app.ext.music.filter import safe
+from app.controller.logger import Logger
 
 
 class VoiceConnectionError(commands.CommandError):
@@ -56,8 +57,8 @@ embed_value = discord.Embed(
 ).add_field(name="INFO", value="stable")
 
 
+@Logger.set()
 def EmbedSaftySearch(data):
-    print(str(data))
     embed_saftyq = discord.Embed(
         title="불법·유해 미디어에 대한 차단 안내",
         url="http://warning.or.kr/",
@@ -81,6 +82,7 @@ class BlockedContent(Exception):
         return self.msg
 
 
+@Logger.set()
 async def adult_filter(search, loop):
     if await safe.adult_filter(search=str(search), loop=loop) == 1:
         return 1

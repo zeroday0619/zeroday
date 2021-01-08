@@ -5,3 +5,4 @@ youtube_dl
 requests
 pymongo
 psutil
+rich

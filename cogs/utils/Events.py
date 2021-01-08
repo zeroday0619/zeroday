@@ -2,11 +2,13 @@ import discord
 import time
 import datetime
 from discord.ext import commands
+from app.controller.logger import Logger
 
 
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.logger = Logger.generate_log()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -14,7 +16,7 @@ class Events(commands.Cog):
         st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
         user = message.author
         msg = message.content
-        print(f"<{st}> : [{user}] >> {msg}")
+        self.logger.info(f"<{st}> : [{user}] >> {msg}")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
