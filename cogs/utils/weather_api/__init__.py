@@ -1,4 +1,4 @@
-from Utils import config
+from app.controller import config
 from .request import Request
 
 

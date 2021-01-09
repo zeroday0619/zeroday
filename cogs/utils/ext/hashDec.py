@@ -1,3 +1,4 @@
+from app.controller.logger import Logger
 from .hash_ext import algorithms
 from .hash_ext.hash_data import (
     ADLER32,
@@ -89,7 +90,6 @@ from .hash_ext.hash_data import (
     md5saltpassusername,
     md5saltmd5pass,
     md5saltmd5passsalt,
-    md5saltmd5passsalt,
     md5saltmd5saltpass,
     md5saltmd5md5passsalt,
     md5username0pass,
@@ -128,9 +128,12 @@ from .hash_ext.hash_data import (
 )
 
 
+@Logger.set()
 async def HashDetection(code):
     zeroHash = []
     h = code
+    md5saltmd5passsalt(h, zeroHash)
+    md5saltmd5pass(h, zeroHash)
     ADLER32(h, zeroHash)
     CRC16(h, zeroHash)
     CRC16CCITT(h, zeroHash)

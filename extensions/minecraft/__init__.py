@@ -4,6 +4,7 @@ import datetime
 from discord.ext import commands
 from discord.ext.commands import Bot
 from discord.ext.commands import Context
+from app.controller.logger import Logger
 
 
 class Minecraft(commands.Cog):
@@ -22,6 +23,7 @@ class Minecraft(commands.Cog):
             await ctx.invoke(help_cmd, "minecraft")
 
     @staticmethod
+    @Logger.set()
     async def convert_status(source: str):
         if source.lower() == "green":
             return "**정상**"
@@ -30,6 +32,7 @@ class Minecraft(commands.Cog):
         else:
             return "상태 정보 처리에 오류가 발생하였습니다."
 
+    @Logger.set()
     async def get_mojang_api_status(self, ctx: Context):
         async with aiohttp.ClientSession() as session:
             async with session.get(self.mojang_status_api) as resp:

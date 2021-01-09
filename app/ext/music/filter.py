@@ -3,9 +3,9 @@ import pymongo
 import asyncio
 import aiohttp
 
-from Utils import config
-from app.ext.performance import run_in_threadpool
+from app.controller import config
 from app.controller.logger import Logger
+from app.ext.performance import run_in_threadpool
 
 
 class SafetySearch:

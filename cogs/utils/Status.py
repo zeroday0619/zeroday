@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.ext.commands import Cog
 from discord.ext.commands import Bot
 import subprocess, re
-from psutil import cpu_percent
+from app.controller.logger import Logger
 
 
 class Status(Cog):
@@ -17,6 +17,7 @@ class Status(Cog):
         self.bot = bot
 
     @staticmethod
+    @Logger.set()
     def get_processor_name():
         if platform.system() == "Windows":
             return platform.processor()
@@ -34,14 +35,15 @@ class Status(Cog):
                     return re.sub(".*model name.*:", "", line, 1)
         return ""
 
+    @Logger.set()
     @commands.command(name="status", aliases=["ping", "핑"])
     async def ping(self, ctx):
         await ctx.send("latency: {0} ms".format(round(ctx.bot.latency, 1)))
 
+    @Logger.set()
     @commands.command(name="system", aliases=["sys"])
     async def _system(self, ctx):
         cpu_model = self.get_processor_name()
-        print(cpu_model)
         cpu_percent = psutil.cpu_percent()
         cpu_count = psutil.cpu_count()
         cpu_freq = psutil.cpu_freq().current / 1024

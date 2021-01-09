@@ -1,11 +1,13 @@
 from discord.ext import commands
 from discord.ext.commands import Bot
+from app.controller.logger import Logger
 
 
 class system(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
+    @Logger.set()
     @commands.command(name="reload", hidden=True)
     async def cogs_reload(self, ctx):
         try:

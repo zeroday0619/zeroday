@@ -14,8 +14,8 @@ class zeroday(Cog):
     async def inviteZeroday(self, ctx):
         """초대링크"""
         embedInviteBot = discord.Embed(
-            title="ZERODAY BOT 초대 링크 | Ver. 20200612 RC 1347",
-            description="초 고음질 음악 재생 기능과 다양한 유틸리티를 탑제한 디스코드 봇 With CTF Tools",
+            title="ZERODAY BOT 초대 링크",
+            description="음악 재생 기능과 다양한 유틸리티를 탑제한 디스코드 봇",
             color=0xABCEE9,
         ).add_field(
             name="ZERODAY BOT Invite Link",
