@@ -110,6 +110,9 @@ class Player:
         )
         return embed
 
+    async def text_to_speech_loop(self, source):
+        self._guild.voice_client.play(source)
+
     @Logger.set()
     async def player_loop(self):
         await self.bot.wait_until_ready()

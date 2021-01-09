@@ -8,6 +8,8 @@ discord_token = config['Token']
 d_command_prefix = config['command_prefix']
 d_description = config['description']
 
+kakao_rest_api_key = config["kakao"]["REST_API_KEY"]
+
 bot = Core(
     discord_token=discord_token,
     command_prefix=d_command_prefix,
