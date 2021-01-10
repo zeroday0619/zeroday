@@ -10,7 +10,6 @@ class Events(commands.Cog):
         self.bot = bot
         self.logger = Logger.generate_log()
 
-    @Logger.set()
     @commands.Cog.listener()
     async def on_message(self, message):
         ts = time.time()
@@ -19,7 +18,6 @@ class Events(commands.Cog):
         msg = message.content
         self.logger.info(f"<{st}> : [{user}] >> {msg}")
 
-    @Logger.set()
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):

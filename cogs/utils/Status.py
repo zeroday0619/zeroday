@@ -35,12 +35,10 @@ class Status(Cog):
                     return re.sub(".*model name.*:", "", line, 1)
         return ""
 
-    @Logger.set()
     @commands.command(name="status", aliases=["ping", "핑"])
     async def ping(self, ctx):
         await ctx.send("latency: {0} ms".format(round(ctx.bot.latency, 1)))
 
-    @Logger.set()
     @commands.command(name="system", aliases=["sys"])
     async def _system(self, ctx):
         cpu_model = self.get_processor_name()

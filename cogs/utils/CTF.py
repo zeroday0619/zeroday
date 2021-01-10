@@ -71,7 +71,6 @@ class CTF(commands.Cog):
         except AttributeError:
             await context.send(f"**{convert}**```fix\n{input}```")
 
-    @Logger.set()
     @encode.command(name="base32", aliases=["b32"])
     async def encode_base32(self, context, *, input: commands.clean_content):
         """base32 인코딩"""
@@ -79,7 +78,6 @@ class CTF(commands.Cog):
             context, "Text -> base32", base64.b32encode(input.encode("UTF-8"))
         )
 
-    @Logger.set()
     @decode.command(name="base32", aliases=["b32"])
     async def decode_base32(self, context, *, input: str):
         """base32 디코딩"""
@@ -90,7 +88,6 @@ class CTF(commands.Cog):
         except Exception:
             await context.send("유효하지 않은 base32")
 
-    @Logger.set()
     @encode.command(name="base64", aliases=["b64"])
     async def encode_base64(self, context, *, input: commands.clean_content):
         """base64 인코딩"""
@@ -98,7 +95,6 @@ class CTF(commands.Cog):
             context, "Text -> base64", base64.urlsafe_b64encode(input.encode("UTF-8"))
         )
 
-    @Logger.set()
     @decode.command(name="base64", aliases=["b64"])
     async def decode_base64(self, context, *, input: str):
         """base64 디코딩"""
@@ -111,13 +107,11 @@ class CTF(commands.Cog):
         except Exception:
             await context.send("유효하지 않은 base64...")
 
-    @Logger.set()
     @encode.command(name="rot13", aliases=["r13"])
     async def encode_rot13(self, context, *, input: commands.clean_content):
         """rot13 인코딩"""
         await self.encryptout(context, "Text -> rot13", codecs.decode(input, "rot_13"))
 
-    @Logger.set()
     @decode.command(name="rot13", aliases=["r13"])
     async def decode_rot13(self, context, *, input: str):
         """rot13 디코딩"""
@@ -128,7 +122,6 @@ class CTF(commands.Cog):
         except Exception:
             await context.send("유효하지 않은 rot13...")
 
-    @Logger.set()
     @encode.command(name="hex")
     async def encode_hex(self, context, *, input: commands.clean_content):
         """hex 인코딩"""
@@ -136,7 +129,6 @@ class CTF(commands.Cog):
             context, "Text -> hex", binascii.hexlify(input.encode("UTF-8"))
         )
 
-    @Logger.set()
     @decode.command(name="hex")
     async def decode_hex(self, context, *, input: str):
         """hex 디코딩"""
@@ -147,7 +139,6 @@ class CTF(commands.Cog):
         except Exception:
             await context.send("유효하지 않은 hex...")
 
-    @Logger.set()
     @encode.command(name="base85", aliases=["b85"])
     async def encode_base85(self, context, *, input: commands.clean_content):
         """base85 인코딩"""
@@ -155,7 +146,6 @@ class CTF(commands.Cog):
             context, "Text -> base85", base64.b85encode(input.encode("UTF-8"))
         )
 
-    @Logger.set()
     @decode.command(name="base85", aliases=["b85"])
     async def decode_base85(self, context, *, input: str):
         """base85 디코딩"""
@@ -166,7 +156,6 @@ class CTF(commands.Cog):
         except Exception:
             await context.send("유효하지 않은 base85...")
 
-    @Logger.set()
     @encode.command(name="ascii85", aliases=["a85"])
     async def encode_ascii85(self, context, *, input: commands.clean_content):
         """ASCII85 인코딩"""
@@ -174,7 +163,6 @@ class CTF(commands.Cog):
             context, "Text -> ASCII85", base64.a85encode(input.encode("UTF-8"))
         )
 
-    @Logger.set()
     @decode.command(name="ascii85", aliases=["a85"])
     async def decode_ascii85(self, context, *, input: str):
         """ASCII85 디코딩"""
@@ -207,25 +195,21 @@ class CTF(commands.Cog):
             help_cmd = self.bot.get_command("help")
             await context.invoke(help_cmd, "ctf")
 
-    @Logger.set()
     @_ctf.command(aliases=["char"])
     async def characters(self, context, *, input: str):
         """char"""
         await context.send(len(input))
 
-    @Logger.set()
     @_ctf.command(aliases=["wc"])
     async def wordcount(self, context, *args):
         """wc"""
         await context.send(len(args))
 
-    @Logger.set()
     @_ctf.command(aliases=["rev"])
     async def reverse(self, context, *, input: str):
         """rev"""
         await context.send(input[::(-1)])
 
-    @Logger.set()
     @_ctf.command(name="counteach", aliases=["cth"])
     async def _counteach(self, context, *, input: str):
         """counteach"""
@@ -239,7 +223,6 @@ class CTF(commands.Cog):
 
         await context.send(str(count))
 
-    @Logger.set()
     @_ctf.command()
     async def rot(self, context, *, input: str, direction=None):
         """rot"""
@@ -261,7 +244,6 @@ class CTF(commands.Cog):
 
         await context.send(f"{allrot}")
 
-    @Logger.set()
     @_ctf.command()
     async def atbash(self, context, *, input: str):
         """atbash"""
@@ -271,7 +253,6 @@ class CTF(commands.Cog):
         atbashed = input.translate(trans)
         await context.send(atbashed)
 
-    @Logger.set()
     @_ctf.command(aliases=["encbin"])
     async def encode_binary(self, context, *, input: str):
         """encode_binary"""
@@ -281,7 +262,6 @@ class CTF(commands.Cog):
             bin(int.from_bytes(input.encode(), "big")).replace("b", ""),
         )
 
-    @Logger.set()
     @_ctf.command(aliases=["decbin"])
     async def decode_binary(self, context, *, input: str):
         """decode_binary"""
@@ -313,7 +293,6 @@ class CTF(commands.Cog):
             help_cmd = self.bot.get_command("help")
             await context.invoke(help_cmd, "crypto")
 
-    @Logger.set()
     @crypto.command(name="hash_detect", aliases=["hdt", "hashtype", "해시타입"])
     async def hash_dectected(self, context, *, args):
         """hash type detection"""
@@ -326,7 +305,6 @@ class CTF(commands.Cog):
         embed.add_field(name="Result :", value=str(response))
         await context.send(context.author.mention, embed=embed)
 
-    @Logger.set()
     @crypto.command(name="md5")
     async def _md5(self, context, *, arg):
         """md5"""
@@ -338,7 +316,6 @@ class CTF(commands.Cog):
         except Exception as Ex:
             await context.send("Error: " + str(Ex))
 
-    @Logger.set()
     @crypto.command(name="sha1")
     async def _sha1(self, context, *, arg):
         """sha1"""
@@ -348,7 +325,6 @@ class CTF(commands.Cog):
         except Exception as Ex:
             await context.send("Error: " + str(Ex))
 
-    @Logger.set()
     @crypto.command(name="sha224")
     async def _sha224(self, context, *, arg):
         """sha224"""
@@ -358,7 +334,6 @@ class CTF(commands.Cog):
         except Exception as Ex:
             await context.send("Error: " + str(Ex))
 
-    @Logger.set()
     @crypto.command(name="sha256")
     async def _sha256(self, context, *, arg):
         """sha256"""
@@ -369,7 +344,6 @@ class CTF(commands.Cog):
         except Exception as Ex:
             await context.send("Error: " + str(Ex))
 
-    @Logger.set()
     @crypto.command(name="sha384")
     async def _sha384(self, context, *, arg):
         """sha384"""
@@ -379,7 +353,6 @@ class CTF(commands.Cog):
         except Exception as Ex:
             await context.send("Error: " + str(Ex))
 
-    @Logger.set()
     @crypto.command(name="sha512")
     async def _sha512(self, context, *, arg):
         """sha512"""
