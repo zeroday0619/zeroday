@@ -2,8 +2,6 @@ from app.ext.music.filter import safe
 from app.ext.music.Player import Player
 from app.ext.music.option import ytdl_format_options_a
 from app.ext.music.option import ytdl_format_options
-from app.ext.music.option import VoiceConnectionError
-from app.ext.music.option import InvalidVoiceChannel
 from app.ext.music.option import ffmpeg_options_a
 from app.ext.music.option import ffmpeg_options
 from app.ext.music.option import adult_filter

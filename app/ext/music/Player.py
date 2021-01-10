@@ -129,11 +129,11 @@ class Player:
 
             source.volume = self.volume
             self.current = source
-
-            self._guild.voice_client.play(
-                source,
-                after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
-            )
+            if self._guild.voice_client is not None:
+                self._guild.voice_client.play(
+                    source,
+                    after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
+                )
 
             embed = await self.create_embed(
                 source=source,

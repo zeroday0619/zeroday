@@ -4,14 +4,6 @@ from app.ext.music.filter import safe
 from app.controller.logger import Logger
 
 
-class VoiceConnectionError(commands.CommandError):
-    """Custom Exception class for connection errors."""
-
-
-class InvalidVoiceChannel(VoiceConnectionError):
-    """Exception for cases of invalid Voice Channels."""
-
-
 def ytdl_format_options_a():
     options = {
         "format": "bestaudio/best",
