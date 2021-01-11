@@ -11,14 +11,6 @@ class Events(commands.Cog):
         self.logger = Logger.generate_log()
 
     @commands.Cog.listener()
-    async def on_message(self, message):
-        ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
-        user = message.author
-        msg = message.content
-        self.logger.info(f"<{st}> : [{user}] >> {msg}")
-
-    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):
             CheckFailure = discord.Embed(
