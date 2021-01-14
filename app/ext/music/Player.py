@@ -5,7 +5,8 @@ import itertools
 
 from async_timeout import timeout
 from discord.ext.commands import Context
-from discord import Guild
+from discord import Guild, TextChannel
+
 from .YTDLSource import YTDLSource
 from app.controller.logger import Logger
 
@@ -56,7 +57,7 @@ class Player:
         self.logger = Logger.generate_log()
         self.bot = ctx.bot
         self._guild: Guild = ctx.guild
-        self._channel = ctx.channel
+        self._channel: TextChannel = ctx.channel
         self._cog = ctx.cog
 
         self.queue = SongQueue()
@@ -129,11 +130,14 @@ class Player:
 
             source.volume = self.volume
             self.current = source
-            if self._guild.voice_client is not None:
+            try:
                 self._guild.voice_client.play(
                     source,
                     after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
                 )
+            except TypeError as NoneTypeError:
+                self.logger.info(NoneTypeError)
+                pass
 
             embed = await self.create_embed(
                 source=source,
@@ -143,11 +147,10 @@ class Player:
                 thumbnail=self.current.thumbnail
             )
 
-            self.np = await self._channel.send(
-                embed=embed
-            )
+            self.np = await self._channel.send(embed=embed)
 
             await self.next.wait()
+
             if self.loop:
                 ctx = await self.bot.get_context(self.np)
                 ctx.author = source.requester
@@ -170,10 +173,9 @@ class Player:
                     await self.queue.put(source_repeat)
 
             try:
-                if not self.is_playing:
-                    await self.np.delete()
-            except discord.HTTPException:
-                pass
+                await self.np.delete()
+            except discord.HTTPException as err:
+                self.logger.error(err)
 
     @Logger.set()
     async def stop(self):

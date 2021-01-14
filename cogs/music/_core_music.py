@@ -62,14 +62,13 @@ class CoreMusic(commands.Cog):
                 raise e
 
         elif isinstance(error, InvalidVoiceChannel):
-            await ctx.send(
+            return await ctx.send(
                 "Voice Channel 연결중 Error 가 발생하였습니다\n 자신이 Voice Channel에 접속되어 있는 지 확인 바랍니다."
             )
 
-        await ctx.send("ERROR: Ignoring exception in command {}".format(ctx.command))
-
         Logger.generate_log().error("Ignoring exception in command {}".format(ctx.command))
         Logger.generate_log().exception(error)
+        return await ctx.send("ERROR: Ignoring exception in command {}".format(ctx.command))
 
     @Logger.set()
     def get_player(self, ctx: Context):

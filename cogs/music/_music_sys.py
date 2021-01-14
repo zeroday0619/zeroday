@@ -54,7 +54,7 @@ async def connect_voice_channel(ctx: Context, channel: VoiceChannel):
             await ctx.send(f"Connecting to channel: <{str(channel)}> timed out")
             raise VoiceConnectionError(f"{TError2.__class__.__module__}: {TError2.__class__.__name__}")
 
-    await ctx.send(
+    return await ctx.send(
         "```css\nConnected to **{}**\n```".format(str(channel)), delete_after=10
     )
 
@@ -83,7 +83,7 @@ async def play_loop(this, ctx: Context, mode: str):
     else:
         player.loop = True
 
-    await ctx.send(f"Player repeat: **{mode}**", delete_after=5)
+    return await ctx.send(f"Player repeat: **{mode}**", delete_after=5)
 
 
 @Logger.set()
@@ -105,10 +105,10 @@ async def play_music(this, ctx: Context, search: str):
 
     if await adult_filter(search=cleanText(source.title), loop=ctx.bot.loop) == 1:
         embed_two = EmbedSaftySearch(data=str(search))
-        await ctx.send(embed=embed_two)
         await this.cleanup(ctx.guild)
+        return await ctx.send(embed=embed_two)
     else:
-        await player.queue.put(source)
+        return [player, source]
 
 
 @Logger.set()
@@ -127,12 +127,13 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
 
     if await adult_filter(search=cleanText(search), loop=ctx.bot.loop) == 1:
         embed_two = EmbedSaftySearch(data=str(search))
-        await ctx.send(embed=embed_two)
+        return await ctx.send(embed=embed_two)
     else:
         player = this.get_player(ctx)
         source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
         for ix in source:
-            await player.queue.put(ix)
+            xo = await player.queue.put(ix)
+        return xo
 
 
 @Logger.set()
@@ -146,7 +147,7 @@ async def pause_play(this, ctx: Context):
     nx = this.pause_embed(ctx=ctx)
     vc.pause()
 
-    await ctx.send(embed=nx, delete_after=5)
+    return await ctx.send(embed=nx, delete_after=5)
 
 
 @Logger.set()
@@ -166,7 +167,7 @@ async def replay(this, ctx: Context):
     nx = this.resume_embed(ctx=ctx)
     vc.resume()
 
-    await ctx.send(nx, delete_after=5)
+    return await ctx.send(nx, delete_after=5)
 
 
 @Logger.set()
@@ -182,7 +183,7 @@ async def skip_song(ctx: Context):
         return
 
     vc.stop()
-    await ctx.send(f"```css\n{ctx.author} : 스킵!.\n```", delete_after=5)
+    return await ctx.send(f"```css\n{ctx.author} : 스킵!.\n```", delete_after=5)
 
 
 @Logger.set()
@@ -198,7 +199,7 @@ async def remove_song(this, ctx: Context, index: int):
         return await ctx.send("Empty queue", delete_after=10)
 
     player.queue.remove(index - 1)
-    await ctx.send("Success delete song", delete_after=10)
+    return await ctx.send("Success delete song", delete_after=10)
 
 
 @Logger.set()
@@ -208,7 +209,7 @@ async def shuffle(this, ctx: Context):
         return await ctx.send("Empty queue", delete_after=10)
 
     player.queue.shuffle()
-    await ctx.send("Success")
+    return await ctx.send("Success")
 
 
 @Logger.set()
@@ -223,7 +224,7 @@ async def get_playlist(this, ctx: Context):
         return await ctx.send(embed=embed_queued)
 
     ox = await this.queue_info_embed(player=player)
-    await ctx.send(embed=ox)
+    return await ctx.send(embed=ox)
 
 
 @Logger.set()
@@ -275,7 +276,7 @@ async def change_player_volume(this, ctx: Context, vol: float):
 
     player.volume = vol / 100
     ix = await this.volume_embed(ctx=ctx, vol=vol)
-    await ctx.send(embed=ix, delete_after=10)
+    return await ctx.send(embed=ix, delete_after=10)
 
 
 @Logger.set()
