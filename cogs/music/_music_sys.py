@@ -2,7 +2,7 @@ import re
 import asyncio
 import discord
 
-from discord import VoiceChannel
+from discord import VoiceChannel, VoiceClient
 from discord.ext.commands import Context
 from app.error.music import InvalidVoiceChannel
 from app.error.music import VoiceConnectionError
@@ -15,6 +15,15 @@ from app.ext.music.option import (
     embed_queued,
     embed_value,
 )
+
+
+def invalid_request():
+    invalid = discord.Embed(
+        title="Music",
+        description="```css\n봇과 같은 보이스 채널에 있지 않습니다.\n```",
+        color=discord.Color.blurple(),
+    ).add_field(name="INFO", value="stable")
+    return invalid
 
 
 @Logger.set()
@@ -67,23 +76,29 @@ async def play_loop(this, ctx: Context, mode: str):
     :param ctx: discord.ext.commands.Context
     :param mode: str
     """
-    player = this.get_player(ctx)
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
 
-    if not player:
-        return
+    if vc.channel.id == channel.id:
+        player = this.get_player(ctx)
 
-    modes = ["current", "all", "disable"]
-    if not mode in modes:
-        return await ctx.send(
-            f"invalid arg: {mode}\nuse: {'/'.join(modes)}", delete_after=5
-        )
+        if not player:
+            return
 
-    if mode == "disable":
-        player.loop = False
+        modes = ["current", "all", "disable"]
+        if not mode in modes:
+            return await ctx.send(
+                f"invalid arg: {mode}\nuse: {'/'.join(modes)}", delete_after=5
+            )
+
+        if mode == "disable":
+            player.loop = False
+        else:
+            player.loop = True
+
+        return await ctx.send(f"Player repeat: **{mode}**", delete_after=5)
     else:
-        player.loop = True
-
-    return await ctx.send(f"Player repeat: **{mode}**", delete_after=5)
+        return await ctx.send(embed=invalid_request(), delete_after=10)
 
 
 @Logger.set()
@@ -100,7 +115,6 @@ async def play_music(this, ctx: Context, search: str):
         await ctx.invoke(this.connect_)
 
     player = this.get_player(ctx)
-
     source = await this.check(ctx=ctx, search=search)
 
     if await adult_filter(search=cleanText(source.title), loop=ctx.bot.loop) == 1:
@@ -108,7 +122,7 @@ async def play_music(this, ctx: Context, search: str):
         await this.cleanup(ctx.guild)
         return await ctx.send(embed=embed_two)
     else:
-        return [player, source]
+        return await player.queue.put(source)
 
 
 @Logger.set()
@@ -121,7 +135,8 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
     """
     await ctx.trigger_typing()
 
-    vc = ctx.voice_client
+    vc: VoiceClient = ctx.voice_client
+
     if not vc:
         await ctx.invoke(this.connect_)
 
@@ -138,16 +153,19 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
 
 @Logger.set()
 async def pause_play(this, ctx: Context):
-    vc = ctx.voice_client
-    if not vc or not vc.is_playing():
-        return await ctx.send(embed=embed_ERROR, delete_after=20)
-    elif vc.is_paused():
-        return
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
+    if vc.channel.id == channel.id:
+        if not vc or not vc.is_playing():
+            return await ctx.send(embed=embed_ERROR, delete_after=20)
+        elif vc.is_paused():
+            return
 
-    nx = this.pause_embed(ctx=ctx)
-    vc.pause()
-
-    return await ctx.send(embed=nx, delete_after=5)
+        nx = this.pause_embed(ctx=ctx)
+        vc.pause()
+        return await ctx.send(embed=nx, delete_after=5)
+    else:
+        return await ctx.send(embed=invalid_request(), delete_after=10)
 
 
 @Logger.set()
@@ -157,33 +175,40 @@ async def replay(this, ctx: Context):
     :param this: self
     :param ctx: discord.ext.commands.Context
     """
-    vc = ctx.voice_client
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
 
     if not vc or not vc.is_connected():
         return await ctx.send(embed=embed_ERROR, delete_after=20)
     elif not vc.is_paused():
         return
 
-    nx = this.resume_embed(ctx=ctx)
-    vc.resume()
-
-    return await ctx.send(nx, delete_after=5)
+    if vc.channel.id == channel.id:
+        nx = this.resume_embed(ctx=ctx)
+        vc.resume()
+        return await ctx.send(nx, delete_after=5)
+    else:
+        return await ctx.send(embed=invalid_request(), delete_after=10)
 
 
 @Logger.set()
 async def skip_song(ctx: Context):
-    vc = ctx.voice_client
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
 
     if not vc or not vc.is_connected():
         return await ctx.send(embed=embed_ERROR, delete_after=20)
 
-    if vc.is_paused():
-        pass
-    elif not vc.is_playing():
-        return
+    if vc.channel.id == channel.id:
+        if vc.is_paused():
+            pass
+        elif not vc.is_playing():
+            return
 
-    vc.stop()
-    return await ctx.send(f"```css\n{ctx.author} : 스킵!.\n```", delete_after=5)
+        vc.stop()
+        return await ctx.send(f"```css\n{ctx.author} : 스킵!.\n```", delete_after=5)
+    else:
+        return await ctx.send(embed=invalid_request(), delete_after=10)
 
 
 @Logger.set()
@@ -194,22 +219,34 @@ async def remove_song(this, ctx: Context, index: int):
     :param ctx: discord.ext.commands.Context
     :param index: index of the playlist
     """
-    player = this.get_player(ctx)
-    if len(player.queue._queue) == 0:
-        return await ctx.send("Empty queue", delete_after=10)
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
+    if vc.channel.id == channel.id:
+        player = this.get_player(ctx)
+        if len(player.queue._queue) == 0:
+            return await ctx.send("Empty queue", delete_after=10)
 
-    player.queue.remove(index - 1)
-    return await ctx.send("Success delete song", delete_after=10)
+        player.queue.remove(index - 1)
+        return await ctx.send("Success delete song", delete_after=10)
+    else:
+        return await ctx.send(embed=invalid_request(), delete_after=10)
 
 
 @Logger.set()
 async def shuffle(this, ctx: Context):
-    player = this.get_player(ctx)
-    if len(player.queue._queue) == 0:
-        return await ctx.send("Empty queue", delete_after=10)
 
-    player.queue.shuffle()
-    return await ctx.send("Success")
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
+
+    if vc.channel.id == channel.id:
+        player = this.get_player(ctx)
+        if len(player.queue._queue) == 0:
+            return await ctx.send("Empty queue", delete_after=10)
+
+        player.queue.shuffle()
+        return await ctx.send("Success")
+    else:
+        return await ctx.send(embed=invalid_request(), delete_after=10)
 
 
 @Logger.set()
@@ -261,7 +298,8 @@ async def change_player_volume(this, ctx: Context, vol: float):
     :param vol: volume
     """
 
-    vc = ctx.voice_client
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
 
     if not vc or not vc.is_connected():
         return await ctx.send(embed=embed_ERROR, delete_after=10)
@@ -269,14 +307,18 @@ async def change_player_volume(this, ctx: Context, vol: float):
     if not 0 < vol < 101:
         return await ctx.send(embed_value)
 
-    player = this.get_player(ctx)
+    if vc.channel.id == channel.id:
+        player = this.get_player(ctx)
 
-    if vc.source:
-        vc.source.volume = vol / 100
+        if vc.source:
+            vc.source.volume = vol / 100
 
-    player.volume = vol / 100
-    ix = await this.volume_embed(ctx=ctx, vol=vol)
-    return await ctx.send(embed=ix, delete_after=10)
+        player.volume = vol / 100
+        ix = await this.volume_embed(ctx=ctx, vol=vol)
+        return await ctx.send(embed=ix, delete_after=10)
+    else:
+        return await ctx.send(embed=invalid_request(), delete_after=10)
+
 
 
 @Logger.set()
@@ -286,9 +328,13 @@ async def play_stop(this, ctx: Context):
     :param this: self
     :param ctx: discord.ext.commands.Context
     """
-    vc = ctx.voice_client
+    vc: VoiceClient = ctx.voice_client
+    channel: VoiceChannel = ctx.author.voice.channel
 
     if not vc or not vc.is_connected():
         return await ctx.send(embed=embed_ERROR, delete_after=20)
 
-    await this.cleanup(ctx.guild)
+    if vc.channel.id == channel.id:
+        await this.cleanup(ctx.guild)
+    else:
+        return await ctx.send(embed=invalid_request(), delete_after=10)

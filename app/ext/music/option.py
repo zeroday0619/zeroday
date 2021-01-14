@@ -37,6 +37,7 @@ embed_ERROR = discord.Embed(
     color=discord.Color.blurple(),
 ).add_field(name="INFO", value="stable")
 
+
 embed_queued = discord.Embed(
     title="Music",
     description="```css\n현재 대기중인 노래가 더 이상 없습니다.\n```",

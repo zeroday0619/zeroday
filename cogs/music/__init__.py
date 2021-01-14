@@ -74,8 +74,7 @@ class Music(CoreMusic):
     @_music.command(name="play", aliases=["music", "p"])
     async def play_(self, ctx: Context, *, search: str):
         """재생"""
-        res = await play_music(this=self, ctx=ctx, search=search)
-        await res[0].queue.put(res[1])
+        await play_music(this=self, ctx=ctx, search=search)
 
     @_music.command(name="play_list", aliases=["ml"])
     async def create_playlist_play(self, ctx: Context, *, search: str):
