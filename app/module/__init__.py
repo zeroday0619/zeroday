@@ -1,0 +1,1 @@
+from app.module.filter import RegexFilter
