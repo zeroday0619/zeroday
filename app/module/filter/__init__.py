@@ -50,7 +50,7 @@ class RegexFilter:
         return processed_text
     
     def suicide(self, source: str):
-        if bool(re.fullmatch(r"(자살)", self.cleanText(source))):
+        if bool(re.match(r"(자살)", self.cleanText(source))):
             return "힘든 일이 있군요. 우리 같이 얘기해요. 당신을 도와줄 수 있는 사람이 많아요."\
             + "한국자살예방협회 24시간 자살예방상담전화 1577-0199. " \
             + "삶의 희망이 보이지 않을때 고민하지 말고 연락주세요."
