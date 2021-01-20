@@ -1,5 +1,6 @@
 import aiohttp
 import kss
+from app.module import RegexFilter
 from app.controller.logger import Logger
 from app.controller import kakao_rest_api_key
 from extensions.tts._extension_error import (
@@ -15,6 +16,7 @@ from extensions.tts._extension_error import (
 
 class KakaoOpenAPI:
     def __init__(self) -> None:
+        self.safe = RegexFilter()
         self.logger = Logger.generate_log()
         self.rest_api_url = "https://kakaoi-newtone-openapi.kakao.com"
         self.rest_api_key = kakao_rest_api_key
@@ -62,7 +64,7 @@ class KakaoOpenAPI:
         """
         dat = []
         data = dat.append
-        for sent in kss.split_sentences(source):
+        for sent in kss.split_sentences(self.safe.suicide(source)):
             self.logger.info(sent)
             data(sent + "<break/>")
 

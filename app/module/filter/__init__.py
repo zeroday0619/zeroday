@@ -49,6 +49,15 @@ class RegexFilter:
         processed_text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', text)
         return processed_text
     
+    async def suicide(self, source: str):
+        pt = re.compile(r"(자살)")
+        if bool(pt.fullmatch(self.cleanText(source))):
+            return "힘든 일이 있군요. 우리 같이 얘기해요. 당신을 도와줄 수 있는 사람이 많아요."\
+            + "한국자살예방협회 24시간 자살예방상담전화 1577-0199. " \
+            + "삶의 희망이 보이지 않을때 고민하지 말고 연락주세요."
+        else:
+            return source
+
     async def check(self, source: str):
         for i in range(0, len(self.database)):
             pt = re.compile(self.database[i])
