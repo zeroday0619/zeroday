@@ -49,7 +49,7 @@ class RegexFilter:
         processed_text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', text)
         return processed_text
     
-    async def suicide(self, source: str):
+    def suicide(self, source: str):
         pt = re.compile(r"(자살)")
         if bool(pt.fullmatch(self.cleanText(source))):
             return "힘든 일이 있군요. 우리 같이 얘기해요. 당신을 도와줄 수 있는 사람이 많아요."\
