@@ -50,10 +50,8 @@ class TextToSpeech(commands.Cog):
                 Logger.generate_log().info("x")
                 self.voice.play(FFmpegPCMAudio(source=file, pipe=True), after=file.close())
 
-    @commands.command("t")
+    @commands.command(".")
     async def talk(self, ctx: Context, *, text: str):
-        self.bot.reload_extension("extensions.tts")
-
         await self.join(ctx.author)
         await self._text_to_speech(text)
 
