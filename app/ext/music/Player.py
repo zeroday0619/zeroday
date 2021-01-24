@@ -3,6 +3,7 @@ import discord
 import random
 import itertools
 
+from typing import Iterator
 from async_timeout import timeout
 from discord.ext.commands import Context
 from discord import Guild, TextChannel
@@ -14,26 +15,30 @@ from app.controller.logger import Logger
 class SongQueue(asyncio.Queue):
     _queue: list
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> list:
         if isinstance(item, slice):
             return list(itertools.islice(self._queue, item.start, item.stop, item.step))
         else:
             return self._queue[item]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return self._queue.__iter__()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.qsize()
 
-    def clear(self):
+    def clear(self) -> None:
         self._queue.clear()
 
-    def shuffle(self):
+    def shuffle(self) -> None:
         random.shuffle(self._queue)
 
-    def remove(self, index: int):
+    def remove(self, index: int) -> None:
         del self._queue[index]
+
+    @property
+    def queue(self):
+        return self._queue
 
 
 class Player:
@@ -52,6 +57,7 @@ class Player:
         "_loop",
         "logger"
     )
+
     def __init__(self, ctx: Context):
         self.logger = Logger.generate_log()
         self.bot = ctx.bot
@@ -59,7 +65,7 @@ class Player:
         self._channel: TextChannel = ctx.channel
         self._cog = ctx.cog
 
-        self.queue = SongQueue()
+        self.queue: SongQueue[list] = SongQueue()
         self.next = asyncio.Event()
         self._volume = 0.5
 
@@ -97,16 +103,16 @@ class Player:
                 description="```css\n{0.title}\n```".format(source),
                 color=discord.Color.blurple(),
             )
-                .add_field(name="Duration", value=duration)
-                .add_field(name="Requested by", value=requester)
-                .add_field(
+            .add_field(name="Duration", value=duration)
+            .add_field(name="Requested by", value=requester)
+            .add_field(
                 name="Uploader",
                 value="[{0.uploader}]({0.uploader_url})".format(current),
             )
-                .add_field(
+            .add_field(
                 name="URL", value="[Click]({0.web_url})".format(current)
             )
-                .set_thumbnail(url=thumbnail)
+            .set_thumbnail(url=thumbnail)
         )
         return embed
 
@@ -167,13 +173,12 @@ class Player:
                     continue
 
                 if self.loop:
-                    self.queue._queue.appendleft(source_repeat)
+                    self.queue.queue.appendleft(source_repeat)
                 else:
                     await self.queue.put(source_repeat)
 
             try:
-                if not self.is_playing():                
-                    await self.np.delete()
+                await self.np.delete()
             except discord.HTTPException as err:
                 self.logger.error(err)
 

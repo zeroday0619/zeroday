@@ -51,7 +51,12 @@ class Minecraft(commands.Cog):
         now = datetime.datetime.now()
         now_time = str(now.strftime('%Y-%m-%d %H:%M:%S'))
 
-        embed=discord.Embed(title="Minecraft Status", url="https://status.mojang.com/check", description="Mojang API 상태정보", color=0x320ee1)
+        embed = discord.Embed(
+            title="Minecraft Status",
+            url="https://status.mojang.com/check",
+            description="Mojang API 상태정보",
+            color=0x320ee1
+        )
         embed.add_field(name="minecraft.net", value=str(minecraft_net_server), inline=False)
         embed.add_field(name="session.minecraft.net", value=str(minecraft_session_server), inline=False)
         embed.add_field(name="account.mojang.com", value=str(mojang_account_server), inline=False)

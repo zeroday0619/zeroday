@@ -52,6 +52,8 @@ class TextToSpeech(commands.Cog):
 
     @commands.command("t")
     async def talk(self, ctx: Context, *, text: str):
+        self.bot.reload_extension("extensions.tts")
+
         await self.join(ctx.author)
         await self._text_to_speech(text)
 
