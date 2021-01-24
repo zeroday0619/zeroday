@@ -30,7 +30,7 @@ def cleanText(readData):
 class YTDLSource(PCMVolumeTransformer):
     logger = Logger.generate_log()
     FFMPEG_OPTIONS = {
-        "before_options": "-reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 -attempt_recovery 1",
+        "before_options": "-reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5",
         "options": "-vn",
     }
 
