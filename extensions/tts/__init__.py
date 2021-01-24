@@ -50,7 +50,7 @@ class TextToSpeech(commands.Cog):
                 Logger.generate_log().info("x")
                 self.voice.play(FFmpegPCMAudio(source=file, pipe=True), after=file.close())
 
-    @commands.command(".")
+    @commands.when_mentioned_or("'")
     async def talk(self, ctx: Context, *, text: str):
         await self.join(ctx.author)
         await self._text_to_speech(text)
