@@ -9,6 +9,7 @@ from discord import Guild, TextChannel
 
 from .YTDLSource import YTDLSource
 from app.controller.logger import Logger
+from app.ext.performance import CancellablePool
 
 
 class SongQueue(asyncio.Queue):
@@ -52,7 +53,7 @@ class Player:
         "_loop",
         "logger"
     )
-
+    pool = CancellablePool()
     def __init__(self, ctx: Context):
         self.logger = Logger.generate_log()
         self.bot = ctx.bot
@@ -67,7 +68,7 @@ class Player:
         self.np = None
         self.current = None
         self._loop = False
-        ctx.bot.loop.create_task(self.player_loop())
+        ctx.bot.loop.create_task(self.pool.apply(self.player_loop))
 
     @property
     def loop(self):
@@ -173,7 +174,8 @@ class Player:
                     await self.queue.put(source_repeat)
 
             try:
-                await self.np.delete()
+                if not self.is_playing():                
+                    await self.np.delete()
             except discord.HTTPException as err:
                 self.logger.error(err)
 
