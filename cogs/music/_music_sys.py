@@ -320,7 +320,6 @@ async def change_player_volume(this, ctx: Context, vol: float):
         return await ctx.send(embed=invalid_request(), delete_after=10)
 
 
-
 @Logger.set()
 async def play_stop(this, ctx: Context):
     """재생종료

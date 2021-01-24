@@ -36,9 +36,6 @@ class SongQueue(asyncio.Queue):
     def remove(self, index: int) -> None:
         del self._queue[index]
 
-    @property
-    def queue(self):
-        return self._queue
 
 
 class Player:
@@ -173,7 +170,7 @@ class Player:
                     continue
 
                 if self.loop:
-                    self.queue.queue.appendleft(source_repeat)
+                    self.queue._queue.appendleft(source_repeat)
                 else:
                     await self.queue.put(source_repeat)
 
