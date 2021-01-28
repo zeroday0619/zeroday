@@ -67,10 +67,10 @@ class SafetySearch:
             if mo != None:
                 check = mo["filter_string"]
                 if check == search:
-                    self.logger.info("DATABASE FILTER: " + self.safty_msg)
+                    self.logger.info(f"DATABASE FILTER: {self.safty_msg}")
                     return 1
                 else:
-                    self.logger.error("DATABASE FILTER: " + "System Error")
+                    self.logger.error("DATABASE FILTER: System Error")
                     return 1
             else:
                 mx = await run_in_threadpool(
@@ -79,7 +79,7 @@ class SafetySearch:
                 if mx == None:
                     resp = await self.requests(data)
                     if resp["adult"] == "1":
-                        self.logger.info("NAVER SEARCH API: " + self.safty_msg)
+                        self.logger.info(f"NAVER SEARCH API: {self.safty_msg}")
                         query = [{"filter_string": search}]
                         await run_in_threadpool(lambda: collection.insert_many(query))
                         return 1

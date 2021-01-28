@@ -115,24 +115,15 @@ class YTDLSource(PCMVolumeTransformer):
         song = songs.append
         for data in data["entries"]:
             if msg:
-                await ctx.send(
-                    "**{}**가 재생목록에 추가되었습니다.".format(str(data["title"])),
-                    delete_after=15,
-                )
+                await ctx.send(f"**{data['title']}**가 재생목록에 추가되었습니다.", delete_after=15,)
+            song(cls(discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author,))
 
-            song(
-                cls(
-                    discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS),
-                    data=data,
-                    requester=ctx.author,
-                )
-            )
         return songs
 
     @classmethod
     @Logger.set()
     async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
-        
+
         if await cls.next_generation_filter(ctx=ctx, search_source=search):
             cls.logger.info(f"Detected: {search}")
             return None
@@ -202,13 +193,13 @@ class YTDLSource(PCMVolumeTransformer):
             duration = []
             _duration = duration.append
             if days > 0:
-                _duration("{} days".format(days))
+                _duration(f"{days} days")
             if hours > 0:
-                _duration("{} hours".format(hours))
+                _duration(f"{hours} hours")
             if minutes > 0:
-                _duration("{} minutes".format(minutes))
+                _duration(f"{minutes} minutes")
             if seconds > 0:
-                _duration("{} seconds".format(seconds))
+                _duration(f"{seconds} seconds")
 
             value = ", ".join(duration)
 

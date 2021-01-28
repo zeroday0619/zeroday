@@ -7,6 +7,7 @@ from typing import Iterator
 from async_timeout import timeout
 from discord.ext.commands import Context
 from discord import Guild, TextChannel
+from app.ext.performance import run_in_threadpool
 
 from .YTDLSource import YTDLSource
 from app.controller.logger import Logger
@@ -97,17 +98,17 @@ class Player:
         embed = (
             discord.Embed(
                 title="Now playing",
-                description="```css\n{0.title}\n```".format(source),
+                description=f"```css\n{source.title}\n```",
                 color=discord.Color.blurple(),
             )
             .add_field(name="Duration", value=duration)
             .add_field(name="Requested by", value=requester)
             .add_field(
                 name="Uploader",
-                value="[{0.uploader}]({0.uploader_url})".format(current),
+                value=f"[{current.uploader}]({current.uploader_url})",
             )
             .add_field(
-                name="URL", value="[Click]({0.web_url})".format(current)
+                name="URL", value=f"[Click]({current.web_url})"
             )
             .set_thumbnail(url=thumbnail)
         )
@@ -133,10 +134,10 @@ class Player:
             source.volume = self.volume
             self.current = source
             try:
-                self._guild.voice_client.play(
+                await run_in_threadpool(lambda: self._guild.voice_client.play(
                     source,
-                    after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
-                )
+                    after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),))
+
             except TypeError as NoneTypeError:
                 self.logger.info(NoneTypeError)
                 pass
