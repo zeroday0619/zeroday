@@ -11,6 +11,7 @@ from functools import partial
 
 from app.ext.performance import run_in_threadpool
 from app.ext.music.option import ytdl_format_options
+from validator_collection import checkers
 from app.ext.music.option import EmbedSaftySearch
 from app.ext.music.option import adult_filter
 from app.module import RegexFilter
@@ -70,14 +71,20 @@ class YTDLSource(PCMVolumeTransformer):
 
     @classmethod
     @Logger.set()
+    async def _next_g(cls, ctx, text, block_text, i):
+        cls.logger.info(f"Check: {i}")
+        if bool(re.fullmatch(text.strip(), block_text[i])):
+            embed_two = EmbedSaftySearch(data=str(text.strip()))
+            await ctx.send(embed=embed_two)
+            return True
+
+    @classmethod
+    @Logger.set()
     async def next_generation_filter(cls, ctx, search_source: str):
         block_text = await cls.LoadASTI_DB(ctx=ctx)
         for text in list(cleanText(search_source).split()):
             for i in range(0, len(block_text)):
-                cls.logger.info(f"Check: {i}")
-                if bool(re.fullmatch(text.strip(), block_text[i])):
-                    embed_two = EmbedSaftySearch(data=str(text.strip()))
-                    await ctx.send(embed=embed_two)
+                if await cls._next_g(ctx=ctx, text=text, block_text=block_text, i=i):
                     return True
         return False
 
@@ -105,32 +112,31 @@ class YTDLSource(PCMVolumeTransformer):
             return False
 
     @classmethod
+    async def playlist_px(cls, ctx: Context, msg, data):
+        await cls.regex_filter(ctx, data["title"])
+        if msg:
+            await ctx.send(f"**{data['title']}**가 재생목록에 추가되었습니다.", delete_after=15,)
+        return cls(discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author,)
+
+    @classmethod
     @Logger.set()
     async def create_playlist(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
-        params_data = partial(ytdl.extract_info, url=search, download=download)
-        data = await loop.run_in_executor(None, params_data)
-
-        songs = []
-        song = songs.append
-        for data in data["entries"]:
-            if msg:
-                await ctx.send(f"**{data['title']}**가 재생목록에 추가되었습니다.", delete_after=15,)
-            song(cls(discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author,))
-
-        return songs
+        data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
+        return [await cls.playlist_px(ctx=ctx, msg=msg, data=ixc) for ixc in data["entries"]]
 
     @classmethod
     @Logger.set()
     async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
 
-        if await cls.next_generation_filter(ctx=ctx, search_source=search):
-            cls.logger.info(f"Detected: {search}")
-            return None
+        if not checkers.is_url(search):
+            if await cls.next_generation_filter(ctx=ctx, search_source=search):
+                cls.logger.info(f"Detected: {search}")
+                return None
 
-        if await cls.regex_filter(ctx=ctx, source=str(search)):
-            cls.logger.info(f"Detected: {search}")
-            return None
+            if await cls.regex_filter(ctx=ctx, source=str(search)):
+                cls.logger.info(f"Detected: {search}")
+                return None
 
         loop = loop or asyncio.get_event_loop()
         params_data = partial(ytdl.extract_info, url=str(search), download=download)
@@ -139,11 +145,11 @@ class YTDLSource(PCMVolumeTransformer):
         if "entries" in data:
             data = data["entries"][0]
 
-        if await cls.next_generation_filter(ctx=ctx, search_source=data['title']):
+        if await cls.regex_filter(ctx=ctx, source=data['title']):
             cls.logger.info(f"Detected: {data['title']}")
             return None
 
-        if await cls.regex_filter(ctx=ctx, source=data['title']):
+        if await cls.next_generation_filter(ctx=ctx, search_source=data['title']):
             cls.logger.info(f"Detected: {data['title']}")
             return None
 

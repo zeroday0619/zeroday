@@ -4,6 +4,7 @@ import discord
 
 from discord import VoiceChannel, VoiceClient
 from discord.ext.commands import Context
+from validator_collection import checkers
 from app.error.music import InvalidVoiceChannel
 from app.error.music import VoiceConnectionError
 from app.ext.music.YTDLSource import YTDLSource
@@ -116,13 +117,7 @@ async def play_music(this, ctx: Context, search: str):
 
     player = this.get_player(ctx)
     source = await this.check(ctx=ctx, search=search)
-
-    if await adult_filter(search=cleanText(source.title), loop=ctx.bot.loop) == 1:
-        embed_two = EmbedSaftySearch(data=str(search))
-        await this.cleanup(ctx.guild)
-        return await ctx.send(embed=embed_two)
-    else:
-        return await player.queue.put(source)
+    return await player.queue.put(source)
 
 
 @Logger.set()
@@ -140,15 +135,15 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
     if not vc:
         await ctx.invoke(this.connect_)
 
-    if await adult_filter(search=cleanText(search), loop=ctx.bot.loop) == 1:
-        embed_two = EmbedSaftySearch(data=str(search))
-        return await ctx.send(embed=embed_two)
-    else:
-        player = this.get_player(ctx)
-        source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
-        for ix in source:
-            xo = await player.queue.put(ix)
-        return xo
+    if not checkers.is_url(search):
+        if await adult_filter(search=cleanText(search), loop=ctx.bot.loop) == 1:
+            embed_two = EmbedSaftySearch(data=str(search))
+            return await ctx.send(embed=embed_two)
+
+    player = this.get_player(ctx)
+    source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
+    return [await player.queue.put(ix) for ix in source]
+
 
 
 @Logger.set()
