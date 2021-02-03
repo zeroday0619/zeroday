@@ -1,5 +1,7 @@
 validator-collection
 discord.py[voice]
+spotify-uri
+async-spotify
 websockets
 youtube_dl
 requests

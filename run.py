@@ -1,8 +1,12 @@
+import logging
 import discord
 from itertools import cycle
 from discord.ext import tasks
 from app.controller import bot
 from app.controller.logger import Logger
+
+
+# logging.basicConfig(level=logging.DEBUG)
 
 logger = Logger.generate_log()
 

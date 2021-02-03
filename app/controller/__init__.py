@@ -9,6 +9,7 @@ discord_token = config['Token']
 d_command_prefix: str = config['command_prefix']
 d_description = config['description']
 kakao_rest_api_key = config["kakao"]["REST_API_KEY"]
+spotify_credentials: dict = config['spotify']
 
 bot = Core(
     discord_token=discord_token,

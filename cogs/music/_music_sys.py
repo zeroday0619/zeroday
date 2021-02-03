@@ -11,6 +11,7 @@ from app.ext.music.YTDLSource import YTDLSource
 from app.ext.music.option import EmbedSaftySearch
 from app.ext.music.option import adult_filter
 from app.controller.logger import Logger
+from app.module.spotify_to_youtube import SpotifyConverter
 from app.ext.music.option import (
     embed_ERROR,
     embed_queued,
@@ -121,6 +122,12 @@ async def play_music(this, ctx: Context, search: str):
 
 
 @Logger.set()
+async def sleep(source):
+    await asyncio.sleep(8)
+    return source
+
+
+@Logger.set()
 async def play_youtube_playlist(this, ctx: Context, search: str):
     """유튜브 재생목록 재생
 
@@ -135,15 +142,27 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
     if not vc:
         await ctx.invoke(this.connect_)
 
-    if not checkers.is_url(search):
-        if await adult_filter(search=cleanText(search), loop=ctx.bot.loop) == 1:
-            embed_two = EmbedSaftySearch(data=str(search))
-            return await ctx.send(embed=embed_two)
+    # Spotify 지원
+    spt = re.compile(r'^(spotify:|https://[a-z]+\.spotify\.com/)')
+    if spt.match(search):
+        spotify = SpotifyConverter()
+        data = await spotify.get_playlist_info(uri=search)
+        if data.get("status"):
+            _player = this.get_player(ctx)
+            if not data.get("data"):
+                return await ctx.send("ERROR: 데이터를 처리하는 과정에서 오류가 발생햐였습니다.")
+            return [await _player.queue.put(await this.check(ctx=ctx, search=await sleep(i["name"]))) for i in data.get("data")]
+        else:
+            return await ctx.send("ERROR: 'Spotify Extension'에 오류가 발생햐였습니다.")
+    else:
+        if not checkers.is_url(search):
+            if await adult_filter(search=cleanText(search), loop=ctx.bot.loop) == 1:
+                embed_two = EmbedSaftySearch(data=str(search))
+                return await ctx.send(embed=embed_two)
 
-    player = this.get_player(ctx)
-    source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
-    return [await player.queue.put(ix) for ix in source]
-
+        player = this.get_player(ctx)
+        source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
+        return [await player.queue.put(ix) for ix in source]
 
 
 @Logger.set()

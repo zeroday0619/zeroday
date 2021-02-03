@@ -38,7 +38,6 @@ class SongQueue(asyncio.Queue):
         del self._queue[index]
 
 
-
 class Player:
     """Base class for Music Player"""
     __slots__ = (
@@ -66,7 +65,6 @@ class Player:
         self.queue: SongQueue[list] = SongQueue()
         self.next = asyncio.Event()
         self._volume = 0.5
-
         self.np = None
         self.current = None
         self._loop = False

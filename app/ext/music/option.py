@@ -79,9 +79,13 @@ class BlockedContent(Exception):
 
 @Logger.set()
 async def adult_filter(search, loop):
-    if await safe.adult_filter(search=str(search), loop=loop) == 1:
+    try:
+        if await safe.adult_filter(search=str(search), loop=loop) == 1:
+            return 1
+        elif await safe.adult_filter(search=str(search), loop=loop) == 2:
+            return 1
+        else:
+            return 0
+    except Exception as e:
+        Logger.generate_log().debug(msg=e)
         return 1
-    elif await safe.adult_filter(search=str(search), loop=loop) == 2:
-        return 1
-    else:
-        return 0

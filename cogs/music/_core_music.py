@@ -1,3 +1,4 @@
+import re
 import discord
 import itertools
 from discord import Guild
@@ -86,14 +87,18 @@ class CoreMusic(commands.Cog):
     @staticmethod
     @Logger.set()
     async def check(ctx: Context, search):
-        if checkers.is_url(search):
-            source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
-            return source
-        else:
-            search_text = search
-            serc = search_text.replace(":", "")
-            source = await YTDLSource.Search(ctx, serc, download=False, loop=ctx.bot.loop)
-            return source
+        try:
+            if checkers.is_url(search):
+                source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
+                return source
+            else:
+                search_text = search
+                serc = search_text.replace(":", "")
+                source = await YTDLSource.Search(ctx, serc, download=False, loop=ctx.bot.loop)
+                return source
+        except Exception as e:
+            Logger.generate_log().debug(msg=e)
+            pass
 
     @Logger.set()
     async def pause_embed(self, ctx: Context):

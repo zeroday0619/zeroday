@@ -13,7 +13,6 @@ class Events(commands.Cog):
 
     @staticmethod
     async def error_binder(ctx: Context, error, exception, title: str, description: str):
-        error(error)
         if isinstance(error, exception):
             err = discord.Embed(
                 title=title,
@@ -23,6 +22,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error):
+        """
         await self.error_binder(
             ctx=ctx,
             error=error,
@@ -30,6 +30,7 @@ class Events(commands.Cog):
             title="Extension Error",
             description=error
         )
+        """
         await self.error_binder(
             ctx=ctx,
             error=error,
