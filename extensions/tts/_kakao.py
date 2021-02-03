@@ -66,7 +66,7 @@ class KakaoOpenAPI:
         data = dat.append
         for sent in kss.split_sentences(self.safe.suicide(source)):
             self.logger.info(sent)
-            data(sent + "<break/>")
+            data('<prosody rate="medium" volume="loud">' + sent + '<break/></prosody>')
 
         text = f"""
         <speak> 

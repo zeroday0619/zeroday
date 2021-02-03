@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import VoiceChannel, VoiceClient, FFmpegPCMAudio, AudioSource
+from discord import VoiceChannel, VoiceClient, FFmpegPCMAudio, AudioSource, PCMVolumeTransformer
 from discord.ext.commands import Context
 from discord.ext.commands import Bot
 from extensions.tts._kakao import KakaoOpenAPI
@@ -48,7 +48,7 @@ class TextToSpeech(commands.Cog):
             file.seek(0)
             if not self.voice.is_playing():
                 Logger.generate_log().info("x")
-                self.voice.play(FFmpegPCMAudio(source=file, pipe=True), after=file.close())
+                self.voice.play(PCMVolumeTransformer(FFmpegPCMAudio(source=file, pipe=True), volume=150), after=file.close())
 
     @commands.command(name="tts", aliases=["t", "-", "=", "#", "%", "*", "`"])
     async def talk(self, ctx: Context, *, text: str):
