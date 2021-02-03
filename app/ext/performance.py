@@ -9,7 +9,7 @@ async def run_in_threadpool(function):
     while running_threads >= max_threads:
         await asyncio.sleep(0.00001)
 
-    with ThreadPoolExecutor(max_workers=12) as thread_pool:
+    with ThreadPoolExecutor(max_workers=4) as thread_pool:
         running_threads = running_threads + 1
 
         loop = asyncio.get_event_loop()
