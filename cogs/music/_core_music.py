@@ -93,7 +93,7 @@ class CoreMusic(commands.Cog):
         if self.status:
             return None
 
-        await asyncio.sleep(8)
+        await asyncio.sleep(3)
         return source
 
     @Logger.set()
