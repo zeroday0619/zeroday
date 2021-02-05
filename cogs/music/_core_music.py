@@ -44,7 +44,8 @@ class CoreMusic(commands.Cog):
         try:
             for source in self.players[guild.id].queue._queue:
                 source.cleanup()
-            del self.status[guild.id]
+
+            self.status[guild.id] = False
             del self.players[guild.id]
 
         except KeyError as e:
@@ -99,6 +100,7 @@ class CoreMusic(commands.Cog):
     async def check(self, ctx: Context, search):
         try:
             print(self.status.get(ctx.guild.id))
+
             if self.status.get(ctx.guild.id):
                 raise Exception
 
