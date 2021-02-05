@@ -1,4 +1,5 @@
 import re
+import asyncio
 import discord
 import itertools
 from discord import Guild
@@ -20,10 +21,11 @@ __version__ = "3.5.0"
 class CoreMusic(commands.Cog):
     """뮤직 모듈"""
 
-    __slots__ = ("bot", "players", "logger")
+    __slots__ = ("bot", "players", "logger", "status")
 
     def __init__(self, bot: Bot):
         self.logger = Logger.generate_log()
+        self.status = False
         self.bot = bot
         self.players = {}
         self.cog_version = __version__
@@ -76,18 +78,31 @@ class CoreMusic(commands.Cog):
         """
         :rtype: object
         """
-        try:
-            player = self.players[ctx.guild.id]
-        except KeyError:
-            player = Player(ctx)
-            self.players[ctx.guild.id] = player
+        if self.status:
+            raise Exception
+        else:
+            try:
+                player = self.players[ctx.guild.id]
+            except KeyError:
+                player = Player(ctx)
+                self.players[ctx.guild.id] = player
+            return player
 
-        return player
-
-    @staticmethod
     @Logger.set()
-    async def check(ctx: Context, search):
+    async def sleep(self, source):
+        if self.status:
+            return None
+
+        await asyncio.sleep(8)
+        return source
+
+    @Logger.set()
+    async def check(self, ctx: Context, search):
         try:
+            print(self.status)
+            if self.status:
+                raise Exception
+
             if checkers.is_url(search):
                 source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
                 return source

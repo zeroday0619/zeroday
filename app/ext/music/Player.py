@@ -134,8 +134,9 @@ class Player:
             try:
                 await run_in_threadpool(lambda: self._guild.voice_client.play(
                     source,
-                    after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),))
-
+                    after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set),
+                    )
+                )
             except TypeError as NoneTypeError:
                 self.logger.info(NoneTypeError)
                 pass

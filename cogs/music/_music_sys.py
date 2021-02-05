@@ -3,7 +3,7 @@ import asyncio
 import discord
 
 from discord import VoiceChannel, VoiceClient
-from discord.ext.commands import Context
+from discord.ext.commands import Context, Bot
 from validator_collection import checkers
 from app.error.music import InvalidVoiceChannel
 from app.error.music import VoiceConnectionError
@@ -122,7 +122,9 @@ async def play_music(this, ctx: Context, search: str):
 
 
 @Logger.set()
-async def sleep(source):
+async def sleep(this, source):
+    if this.status:
+        return None
     await asyncio.sleep(8)
     return source
 
@@ -130,7 +132,6 @@ async def sleep(source):
 @Logger.set()
 async def play_youtube_playlist(this, ctx: Context, search: str):
     """유튜브 재생목록 재생
-
     :param this: self
     :param ctx: discord.ext.commands.Context
     :param search: str
@@ -151,7 +152,7 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
             _player = this.get_player(ctx)
             if not data.get("data"):
                 return await ctx.send("ERROR: 데이터를 처리하는 과정에서 오류가 발생햐였습니다.")
-            return [await _player.queue.put(await this.check(ctx=ctx, search=await sleep(i["name"]))) for i in data.get("data")]
+            return [await _player.queue.put(await this.check(ctx=ctx, search=await this.sleep(i["name"]))) for i in data.get("data")]
         else:
             return await ctx.send("ERROR: 'Spotify Extension'에 오류가 발생햐였습니다.")
     else:
@@ -162,7 +163,7 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
 
         player = this.get_player(ctx)
         source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
-        return [await player.queue.put(ix) for ix in source]
+        return [await player.queue.put(await this.sleep(ix)) for ix in source]
 
 
 @Logger.set()
@@ -348,6 +349,7 @@ async def play_stop(this, ctx: Context):
         return await ctx.send(embed=embed_ERROR, delete_after=20)
 
     if vc.channel.id == channel.id:
+        this.status = True
         await this.cleanup(ctx.guild)
     else:
         return await ctx.send(embed=invalid_request(), delete_after=10)

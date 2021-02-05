@@ -8,7 +8,7 @@ from discord import PCMVolumeTransformer
 from discord.ext.commands import Context
 from youtube_dl import YoutubeDL
 from functools import partial
-
+from app.module.spotify_to_youtube import SpotifyConverter
 from app.ext.performance import run_in_threadpool
 from app.ext.music.option import ytdl_format_options
 from validator_collection import checkers
@@ -17,12 +17,13 @@ from app.ext.music.option import adult_filter
 from app.module import RegexFilter
 from app.controller.logger import Logger
 
-
 youtube_dl.utils.bug_reports_message = lambda: ""
 ytdl = YoutubeDL(ytdl_format_options)
 
+logger = Logger.generate_log()
 
-@Logger.set()
+
+@Logger.set(logger=logger)
 def cleanText(readData):
     text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', readData)
     return text
@@ -58,7 +59,7 @@ class YTDLSource(PCMVolumeTransformer):
         return self.__getattribute__(item)
 
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def LoadASTI_DB(cls, ctx) -> list:
         async with aiohttp.ClientSession() as session:
             async with session.get(url="https://zeroday0619.github.io/ASTI_DB/src/db.json") as resp:
@@ -70,7 +71,7 @@ class YTDLSource(PCMVolumeTransformer):
         return block_text
 
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def _next_g(cls, ctx, text, block_text, i):
         cls.logger.info(f"Check: {i}")
         if bool(re.fullmatch(text.strip(), block_text[i])):
@@ -82,7 +83,7 @@ class YTDLSource(PCMVolumeTransformer):
             return True
 
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def next_generation_filter(cls, ctx, search_source: str):
         try:
             block_text = await cls.LoadASTI_DB(ctx=ctx)
@@ -96,7 +97,7 @@ class YTDLSource(PCMVolumeTransformer):
             return False
 
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def naver_filter(cls, ctx, search_source: str):
         for text in list(cleanText(search_source).split()):
             if await adult_filter(search=str(text.strip()), loop=ctx.bot.loop) == 1:
@@ -109,9 +110,9 @@ class YTDLSource(PCMVolumeTransformer):
                     pass
                 return True
         return False
-    
+
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def regex_filter(cls, ctx: Context, source: str):
         tool = RegexFilter()
         try:
@@ -135,25 +136,25 @@ class YTDLSource(PCMVolumeTransformer):
         try:
             await cls.regex_filter(ctx, data["title"])
             if msg:
-                await ctx.send(f"**{data['title']}**가 재생목록에 추가되었습니다.", delete_after=15,)
-            return cls(discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author,)
+                await ctx.send(f"**{data['title']}**가 재생목록에 추가되었습니다.", delete_after=15, )
+            return cls(discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author, )
         except Exception as e:
             cls.logger.debug(msg=e)
             pass
 
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def create_playlist(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
         try:
             loop = loop or asyncio.get_event_loop()
             data = await run_in_threadpool(lambda: ytdl.extract_info(url=search, download=download))
             return [await cls.playlist_px(ctx=ctx, msg=msg, data=ixc) for ixc in data["entries"]]
         except Exception as e:
-            cls.logger.debug(msg=e)
+            cls.logger.debug(msg=e, exc_info=True, stack_info=True)
             pass
 
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
         try:
             if not checkers.is_url(search):
@@ -206,7 +207,7 @@ class YTDLSource(PCMVolumeTransformer):
             pass
 
     @classmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     async def regather_stream(cls, ctx, *, download=False):
         data = await run_in_threadpool(
             lambda: ytdl.extract_info(url=data["webpage_url"], download=download)
@@ -218,7 +219,7 @@ class YTDLSource(PCMVolumeTransformer):
         )
 
     @staticmethod
-    @Logger.set()
+    @Logger.set(logger=logger)
     def parse_duration(duration: int):
         try:
             value = None

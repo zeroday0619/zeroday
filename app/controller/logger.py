@@ -5,6 +5,7 @@ from rich.logging import RichHandler
 
 
 class Logger:
+
     @staticmethod
     def generate_log():
         """
@@ -38,31 +39,27 @@ class Logger:
         return logger
 
     @classmethod
-    def set(cls):
+    def set(cls, logger=None):
         """
         We create a parent function to take arguments
         :return: log
         """
+        if logger is None:
+            logger = cls.generate_log()
+
         def error_log(func):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
-                logger = cls.generate_log()
                 try:
-                    # Execute the called function, in this case `divide()`.
-                    # If it throws an error `Exception` will be called.
-                    # Otherwise it will be execute successfully.
                     if kwargs != {}:
-                        logger.debug(kwargs)
+                        logger.debug(msg=kwargs)
 
                     result = func(*args, **kwargs)
-
                     if result is not None:
-                        logger.debug(result)
-
+                        logger.debug(msg=result)
                     return result
-                except Exception as e:
-                    error_msg = f"{e}"
-                    logger.exception(msg=error_msg, exc_info=True)
-                    return e  # Or whatever message you want.
+                except:
+                    logger.exception(msg=f"There was an exception in {func.__name__}", exc_info=False)
+                    raise
             return wrapper
         return error_log
