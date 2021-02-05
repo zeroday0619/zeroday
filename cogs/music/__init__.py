@@ -127,7 +127,6 @@ class Music(CoreMusic):
     async def stop_(self, ctx: Context):
         """stop"""
         self.status = {ctx.guild.id: False}
-        await asyncio.sleep(10)
         await play_stop(this=self, ctx=ctx)
 
 
