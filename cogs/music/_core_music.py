@@ -78,15 +78,13 @@ class CoreMusic(commands.Cog):
         """
         :rtype: object
         """
-        if self.status:
-            raise Exception
-        else:
-            try:
-                player = self.players[ctx.guild.id]
-            except KeyError:
-                player = Player(ctx)
-                self.players[ctx.guild.id] = player
-            return player
+
+        try:
+            player = self.players[ctx.guild.id]
+        except KeyError:
+            player = Player(ctx)
+            self.players[ctx.guild.id] = player
+        return player
 
     @Logger.set()
     async def sleep(self, source):
