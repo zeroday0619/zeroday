@@ -90,8 +90,9 @@ class CoreMusic(commands.Cog):
 
     @Logger.set()
     async def sleep(self, ctx: Context, source):
-        if self.status.get(ctx.guild.id):
-            return None
+        if type(self.status) is not bool:
+            if self.status.get(ctx.guild.id):
+                return None
 
         await asyncio.sleep(3)
         return source
@@ -99,10 +100,11 @@ class CoreMusic(commands.Cog):
     @Logger.set()
     async def check(self, ctx: Context, search):
         try:
-            print(self.status.get(ctx.guild.id))
-
-            if self.status.get(ctx.guild.id):
-                raise Exception
+            # print(self.status.get(ctx.guild.id))
+            if type(self.status) is not bool:
+                print(self.status.get(ctx.guild.id))
+                if self.status.get(ctx.guild.id):
+                    raise Exception
 
             if checkers.is_url(search):
                 source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
