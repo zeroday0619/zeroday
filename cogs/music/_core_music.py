@@ -93,8 +93,6 @@ class CoreMusic(commands.Cog):
         if type(self.status) is not bool:
             if self.status.get(ctx.guild.id):
                 return None
-
-        await asyncio.sleep(3)
         return source
 
     @Logger.set()
