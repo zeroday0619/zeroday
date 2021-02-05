@@ -44,7 +44,9 @@ class CoreMusic(commands.Cog):
         try:
             for source in self.players[guild.id].queue._queue:
                 source.cleanup()
+            del self.status[guild.id]
             del self.players[guild.id]
+
         except KeyError as e:
             raise e
 
@@ -87,7 +89,7 @@ class CoreMusic(commands.Cog):
 
     @Logger.set()
     async def sleep(self, ctx: Context, source):
-        if self.status[ctx.guild.id]:
+        if self.status.get(ctx.guild.id):
             return None
 
         await asyncio.sleep(3)
@@ -96,8 +98,8 @@ class CoreMusic(commands.Cog):
     @Logger.set()
     async def check(self, ctx: Context, search):
         try:
-            print(self.status[ctx.guild.id])
-            if self.status[ctx.guild.id]:
+            print(self.status.get(ctx.guild.id))
+            if self.status.get(ctx.guild.id):
                 raise Exception
 
             if checkers.is_url(search):
