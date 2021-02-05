@@ -25,7 +25,7 @@ class CoreMusic(commands.Cog):
 
     def __init__(self, bot: Bot):
         self.logger = Logger.generate_log()
-        self.status = False
+        self.status = {}
         self.bot = bot
         self.players = {}
         self.cog_version = __version__
@@ -78,7 +78,6 @@ class CoreMusic(commands.Cog):
         """
         :rtype: object
         """
-
         try:
             player = self.players[ctx.guild.id]
         except KeyError:
@@ -87,8 +86,8 @@ class CoreMusic(commands.Cog):
         return player
 
     @Logger.set()
-    async def sleep(self, source):
-        if self.status:
+    async def sleep(self, ctx: Context, source):
+        if self.status[ctx.guild.id]:
             return None
 
         await asyncio.sleep(3)
@@ -97,8 +96,8 @@ class CoreMusic(commands.Cog):
     @Logger.set()
     async def check(self, ctx: Context, search):
         try:
-            print(self.status)
-            if self.status:
+            print(self.status[ctx.guild.id])
+            if self.status[ctx.guild.id]:
                 raise Exception
 
             if checkers.is_url(search):

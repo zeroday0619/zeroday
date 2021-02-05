@@ -32,7 +32,7 @@ class Music(CoreMusic):
     def __init__(self, bot: Bot):
         self.logger = Logger.generate_log()
         super(Music, self).__init__(bot)
-        self.status = False
+        self.status = {}
 
     @commands.group(name="music", aliases=["m"])
     async def _music(self, ctx):
@@ -126,7 +126,7 @@ class Music(CoreMusic):
     @_music.command(name="stop")
     async def stop_(self, ctx: Context):
         """stop"""
-        self.status = True
+        self.status = {ctx.guild.id: False}
         await asyncio.sleep(10)
         await play_stop(this=self, ctx=ctx)
 

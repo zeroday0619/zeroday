@@ -152,7 +152,7 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
             _player = this.get_player(ctx)
             if not data.get("data"):
                 return await ctx.send("ERROR: 데이터를 처리하는 과정에서 오류가 발생햐였습니다.")
-            return [await _player.queue.put(await this.check(ctx=ctx, search=await this.sleep(i["name"]))) for i in data.get("data")]
+            return [await _player.queue.put(await this.check(ctx=ctx, search=await this.sleep(ctx, i["name"]))) for i in data.get("data")]
         else:
             return await ctx.send("ERROR: 'Spotify Extension'에 오류가 발생햐였습니다.")
     else:
@@ -163,7 +163,7 @@ async def play_youtube_playlist(this, ctx: Context, search: str):
 
         player = this.get_player(ctx)
         source = await YTDLSource.create_playlist(ctx, search, download=False, loop=ctx.bot.loop)
-        return [await player.queue.put(await this.sleep(ix)) for ix in source]
+        return [await player.queue.put(await this.sleep(ctx, ix)) for ix in source]
 
 
 @Logger.set()
