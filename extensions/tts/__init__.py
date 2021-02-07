@@ -9,6 +9,10 @@ from io import BytesIO
 from tempfile import TemporaryFile
 
 
+def blockJam_mini(ctx: Context):
+    return ctx.message.author.id != 669558223329820702
+
+
 class TextToSpeech(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -51,11 +55,13 @@ class TextToSpeech(commands.Cog):
                 self.voice.play(PCMVolumeTransformer(FFmpegPCMAudio(source=file, pipe=True), volume=150), after=file.close())
 
     @commands.command(name="tts", aliases=["t", "-", "=", "#", "%", "*", "`"])
+    @commands.check(blockJam_mini)
     async def talk(self, ctx: Context, *, text: str):
         await self.join(ctx.author)
         await self._text_to_speech(text)
 
     @commands.command("disconnect")
+    @commands.check(blockJam_mini)
     async def bye(self, ctx: Context):
         if not self.is_joined(ctx.author):
             return

@@ -52,11 +52,13 @@ class Player:
         "repeat",
         "_volume",
         "_loop",
-        "logger"
+        "logger",
+        "status"
     )
 
     def __init__(self, ctx: Context):
         self.logger = Logger.generate_log()
+        self.status: dict = {}
         self.bot = ctx.bot
         self._guild: Guild = ctx.guild
         self._channel: TextChannel = ctx.channel
@@ -131,6 +133,7 @@ class Player:
 
             source.volume = self.volume
             self.current = source
+
             try:
                 await run_in_threadpool(lambda: self._guild.voice_client.play(
                     source,

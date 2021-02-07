@@ -45,7 +45,6 @@ class CoreMusic(commands.Cog):
             for source in self.players[guild.id].queue._queue:
                 source.cleanup()
 
-            self.status[guild.id] = False
             del self.players[guild.id]
 
         except KeyError as e:
@@ -90,20 +89,11 @@ class CoreMusic(commands.Cog):
 
     @Logger.set()
     async def sleep(self, ctx: Context, source):
-        if type(self.status) is not bool:
-            if self.status.get(ctx.guild.id):
-                return None
         return source
 
     @Logger.set()
     async def check(self, ctx: Context, search):
         try:
-            # print(self.status.get(ctx.guild.id))
-            if type(self.status) is not bool:
-                print(self.status.get(ctx.guild.id))
-                if self.status.get(ctx.guild.id):
-                    raise Exception
-
             if checkers.is_url(search):
                 source = await YTDLSource.Search(ctx, search, download=False, loop=ctx.bot.loop)
                 return source

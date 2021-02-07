@@ -25,6 +25,10 @@ from cogs.music._music_sys import (
 from app.controller.logger import Logger
 
 
+def blockJam_mini(ctx: Context):
+    return ctx.message.author.id != 669558223329820702
+
+
 class Music(CoreMusic):
     """Music"""
     __slots__ = ("bot", "players", "logger", "status")
@@ -35,6 +39,7 @@ class Music(CoreMusic):
         self.status = {}
 
     @commands.group(name="music", aliases=["m"])
+    @commands.check(blockJam_mini)
     async def _music(self, ctx):
         """
         ```markdown
@@ -126,7 +131,6 @@ class Music(CoreMusic):
     @_music.command(name="stop")
     async def stop_(self, ctx: Context):
         """stop"""
-        self.status = {ctx.guild.id: False}
         await play_stop(this=self, ctx=ctx)
 
 
