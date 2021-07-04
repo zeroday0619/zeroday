@@ -1,9 +1,6 @@
-import re
-import asyncio
 import discord
 
 from cogs.music._core_music import CoreMusic
-
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from cogs.music._music_sys import (
@@ -33,7 +30,7 @@ class Music(CoreMusic):
     """Music"""
     __slots__ = ("bot", "players", "logger", "status")
 
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Bot):  
         self.logger = Logger.generate_log()
         super(Music, self).__init__(bot)
         self.status = {}
@@ -130,9 +127,9 @@ class Music(CoreMusic):
 
     @_music.command(name="stop")
     async def stop_(self, ctx: Context):
-        """stop"""
+        """stop"""            
         await play_stop(this=self, ctx=ctx)
-
+ 
 
 @Logger.set()
 def setup(bot: Bot):

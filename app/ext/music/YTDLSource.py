@@ -58,17 +58,7 @@ class YTDLSource(PCMVolumeTransformer):
     def __getitem__(self, item: str):
         return self.__getattribute__(item)
 
-    @classmethod
-    @Logger.set(logger=logger)
-    async def LoadASTI_DB(cls, ctx) -> list:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url="https://zeroday0619.github.io/ASTI_DB/src/db.json") as resp:
-                if resp.status != 200:
-                    await ctx.send("ASTI DB Connect Failed!")
-                cls.logger.info(f"Connect ASTI database | status code : {resp.status}")
-                nxg = await resp.json()
-            block_text = nxg['word']
-        return block_text
+
 
     @classmethod
     @Logger.set(logger=logger)
@@ -82,19 +72,6 @@ class YTDLSource(PCMVolumeTransformer):
                 cls.logger.debug(msg=e)
             return True
 
-    @classmethod
-    @Logger.set(logger=logger)
-    async def next_generation_filter(cls, ctx, search_source: str):
-        try:
-            block_text = await cls.LoadASTI_DB(ctx=ctx)
-            for text in list(cleanText(search_source).split()):
-                for i in range(0, len(block_text)):
-                    if await cls._next_g(ctx=ctx, text=text, block_text=block_text, i=i):
-                        return True
-            return False
-        except Exception as e:
-            cls.logger.debug(msg=e)
-            return False
 
     @classmethod
     @Logger.set(logger=logger)
@@ -134,7 +111,6 @@ class YTDLSource(PCMVolumeTransformer):
     @classmethod
     async def playlist_px(cls, ctx: Context, msg, data):
         try:
-            await cls.regex_filter(ctx, data["title"])
             if msg:
                 await ctx.send(f"**{data['title']}**가 재생목록에 추가되었습니다.", delete_after=15, )
             return cls(discord.FFmpegPCMAudio(data["url"], **cls.FFMPEG_OPTIONS), data=data, requester=ctx.author, )
@@ -158,10 +134,6 @@ class YTDLSource(PCMVolumeTransformer):
     async def Search(cls, ctx, search: str, *, download=False, msg=True, loop: asyncio.BaseEventLoop = None):
         try:
             if not checkers.is_url(search):
-                if await cls.next_generation_filter(ctx=ctx, search_source=search):
-                    cls.logger.info(f"Detected: {search}")
-                    return None
-
                 if await cls.regex_filter(ctx=ctx, source=str(search)):
                     cls.logger.info(f"Detected: {search}")
                     return None
@@ -177,18 +149,8 @@ class YTDLSource(PCMVolumeTransformer):
                 cls.logger.info(f"Detected: {data['title']}")
                 return None
 
-            if await cls.next_generation_filter(ctx=ctx, search_source=data['title']):
-                cls.logger.info(f"Detected: {data['title']}")
-                return None
-
             if await cls.naver_filter(ctx=ctx, search_source=data['title']):
                 cls.logger.info(f"Detected: {data['title']}")
-                return None
-
-            if await adult_filter(search=str(cleanText(data["title"])), loop=ctx.bot.loop) == 1:
-                cls.logger.info(f"차단: {data['title']}")
-                embed_two = EmbedSaftySearch(data=str(data["title"]))
-                await ctx.send(embed=embed_two)
                 return None
 
             if msg:

@@ -8,3 +8,4 @@ requests
 pymongo
 psutil
 rich
+kss

@@ -1,3 +1,4 @@
+import asyncio
 import spotify_uri
 
 from typing import Optional
@@ -17,6 +18,7 @@ class SpotifyConverter:
         :param client_id: [Optional] : developer.spotify.com 에서 얻은 client id
         :param client_secret: [Optional] : developer.spotify.com 에서 얻은 client secret
         """
+        self.end: Optional[SpotifyEndpoint] = None
         self.client_id: Optional[str] = client_id or spotify_credentials.get("client_id")
         self.client_secret: Optional[str] = client_secret or spotify_credentials.get("client_secret")
 
@@ -40,11 +42,12 @@ class SpotifyConverter:
         return api_client
 
     @Logger.set()
-    async def get_playlist_info(self, uri: str):
+    async def get_playlist_info(self, uri: str, loop: Optional[asyncio.AbstractEventLoop] = None):
         api_client = await self.get_api_client()
         source = spotify_uri.parse(uri=uri)
-        end = SpotifyEndpoint(source=source, api_client=api_client)
-        resp = await end.router()
+        self.end = SpotifyEndpoint(source=source, api_client=api_client, loop=loop)
+
+        resp = await self.end.router()
         name, artist = resp[0], resp[1]
         n_name = len(name)
 
@@ -53,4 +56,3 @@ class SpotifyConverter:
             return {"status": True, "data": result}
         else:
             return {"status": False, "data": None}
-

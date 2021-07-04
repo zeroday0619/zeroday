@@ -1,4 +1,7 @@
-from typing import Union, Optional
+import asyncio
+from asyncio.futures import Future
+
+from typing import Union, Optional, List
 from async_spotify import SpotifyApiClient
 from spotify_uri.search import Search
 from spotify_uri.local import Local
@@ -12,8 +15,14 @@ from app.controller.logger import Logger
 
 
 class SpotifyEndpoint:
-    def __init__(self, source: Union[Search, Local, Playlist, User, Artist, Album, Track, Episode],
-                 api_client: Optional[SpotifyApiClient]):
+    def __init__(
+        self, 
+        source: Union[Search, Local, Playlist, User, Artist, Album, Track, Episode], 
+        api_client: Optional[SpotifyApiClient], 
+        loop: Optional[asyncio.AbstractEventLoop] = None    
+    ):
+        self.fut: Optional[Future[List]] = None
+        self.loop = loop or asyncio.get_event_loop()
         self.api_client = api_client
         self.type = source.type
         self.id = source.id
@@ -59,5 +68,11 @@ class SpotifyEndpoint:
                 ] for index in source["items"]
             ]
         ]
+        # Logger.generate_log().debug(msg=result)
+        # self.fut = asyncio.gather(self.stop_all(), *result, return_exceptions=True)
+        # self.loop.run_until_complete(self.fut)
+        # res = self.fut.result()
         await self.api_client.close_client()
+        # self.loop.close()
+        # Logger.generate_log().debug(msg=res)
         return result
