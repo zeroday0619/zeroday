@@ -56,7 +56,7 @@ def EmbedSaftySearch(data):
     embed_saftyq = discord.Embed(
         title="불법·유해 미디어에 대한 차단 안내",
         url="http://warning.or.kr/",
-        description=f"```ini\n어허 그러면 안 돼~```",
+        description=f"```ini\n검열 시스템 3.0~```",
         color=discord.Color.blurple(),
     ).set_image(
         url="https://cdn.zeroday0619.dev/img/a943b980d720c07de45b2ac88edaa116.jpg"
