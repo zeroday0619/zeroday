@@ -8,7 +8,7 @@ from discord.ext.commands import Cog
 from discord.ext.commands import Bot
 import subprocess, re
 from app.controller.logger import Logger
-
+from app.module.discord_status import DISCORDStatus
 
 class Status(Cog):
     """상태정보"""
@@ -35,9 +35,15 @@ class Status(Cog):
                     return re.sub(".*model name.*:", "", line, 1)
         return ""
 
-    @commands.command(name="status", aliases=["ping", "핑"])
+    @commands.command(name="status")
     async def ping(self, ctx):
-        await ctx.send("latency: {0} ms".format(round(ctx.bot.latency, 1)))
+        ds = DISCORDStatus()
+        try:
+            embed = await ds.create_embed()
+            await ctx.send(embed=embed)
+        except Exception as e:
+            await ctx.send(e)
+    
 
     @commands.command(name="system", aliases=["sys"])
     async def _system(self, ctx):
