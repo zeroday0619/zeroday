@@ -32,7 +32,7 @@ class TextToSpeech(commands.Cog):
     async def join(self, member: discord.Member):
         # Joining the already joined channel is a NOP.
         if self.is_joined(member):
-            raise RuntimeWarning(f"{member} is already joined.")
+            return
 
         channel: VoiceChannel = member.voice.channel
         try:
