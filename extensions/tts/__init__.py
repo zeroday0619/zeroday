@@ -1,9 +1,8 @@
 import discord
 from discord.ext import commands
-from discord import FFmpegPCMAudio, PCMVolumeTransformer, VoiceProtocol, VoiceChannel, Member
+from discord import FFmpegPCMAudio, PCMVolumeTransformer, VoiceProtocol, Member
 from discord.ext.commands import Context
 from discord.ext.commands import Bot
-from discord.member import VoiceState
 from extensions.tts._kakao import KakaoOpenAPI
 from app.controller.logger import Logger
 from io import BytesIO
@@ -18,13 +17,13 @@ def blockJam_mini(ctx: Context):
 class TextToSpeech(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.voice: Optional[VoiceProtocol] = None
+        self.voice = None
         self.open_api = KakaoOpenAPI()
 
     @Logger.set()
     def is_joined(self, member: Member):
         if not member.voice:
-            raise RuntimeWarning("Unknown Type")
+            raise
 
         return self.voice and self.voice.channel.id == member.voice.channel.id
 
@@ -38,12 +37,11 @@ class TextToSpeech(commands.Cog):
         try:
 
             if self.voice.is_playing():
-                raise RuntimeWarning("Already playing")
+                raise
 
             await self.voice.move_to(channel)
-        except AttributeError as e:
+        except AttributeError:
             self.voice = await channel.connect()
-            raise RuntimeWarning(e)
             
     @Logger.set()
     async def _text_to_speech(self, source):
