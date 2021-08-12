@@ -46,7 +46,6 @@ class TextToSpeech(commands.Cog):
             await self.voice.move_to(channel)
         except AttributeError as e:
             self.voice = await channel.connect()
-            raise RuntimeWarning(e)
             
     @Logger.set()
     async def _text_to_speech(self, source):
