@@ -35,7 +35,6 @@ class TextToSpeech(commands.Cog):
 
         channel = member.voice.channel
         try:
-
             if self.voice.is_playing():
                 raise
 
@@ -60,7 +59,7 @@ class TextToSpeech(commands.Cog):
     @commands.check(blockJam_mini)
     async def talk(self, ctx: Context, *, text: str):
         await self.join(ctx.author)
-        await self._text_to_speech(f"{ctx.author.display_name}님이 말합니다. "+text)
+        await self._text_to_speech(f"{ctx.author.display_name}님이 말합니다. {text}")
 
 
     @commands.command("disconnect")
