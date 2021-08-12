@@ -1,12 +1,14 @@
 import discord
 from discord.ext import commands
-from discord import VoiceChannel, VoiceClient, FFmpegPCMAudio, AudioSource, PCMVolumeTransformer
+from discord import FFmpegPCMAudio, PCMVolumeTransformer, VoiceProtocol, VoiceChannel, Member
 from discord.ext.commands import Context
 from discord.ext.commands import Bot
+from discord.member import VoiceState
 from extensions.tts._kakao import KakaoOpenAPI
 from app.controller.logger import Logger
 from io import BytesIO
 from tempfile import TemporaryFile
+from typing import Optional
 
 
 def blockJam_mini(ctx: Context):
@@ -16,13 +18,13 @@ def blockJam_mini(ctx: Context):
 class TextToSpeech(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.voice = None
+        self.voice: Optional[VoiceProtocol] = None
         self.open_api = KakaoOpenAPI()
 
     @Logger.set()
-    def is_joined(self, member: discord.Member):
+    def is_joined(self, member: Member):
         if not member.voice:
-            raise
+            raise RuntimeWarning("Unknown Type")
 
         return self.voice and self.voice.channel.id == member.voice.channel.id
 
@@ -30,17 +32,22 @@ class TextToSpeech(commands.Cog):
     async def join(self, member: discord.Member):
         # Joining the already joined channel is a NOP.
         if self.is_joined(member):
-            return
+            raise RuntimeWarning(f"{member} is already joined.")
 
-        channel = member.voice.channel
+        if type(self.voice) is VoiceProtocol:
+            raise RuntimeWarning("Unknown Type")
+
+        channel: VoiceChannel = member.voice.channel
         try:
+
             if self.voice.is_playing():
-                raise
+                raise RuntimeWarning("Already playing")
 
             await self.voice.move_to(channel)
-        except AttributeError:
+        except AttributeError as e:
             self.voice = await channel.connect()
-
+            raise RuntimeWarning(e)
+            
     @Logger.set()
     async def _text_to_speech(self, source):
         rep = self.open_api.speak_data_generator(source)
@@ -57,14 +64,20 @@ class TextToSpeech(commands.Cog):
     @commands.command(name="tts", aliases=["t", "-", "=", "#", "%", "*", "`"])
     @commands.check(blockJam_mini)
     async def talk(self, ctx: Context, *, text: str):
-        await self.join(ctx.author)
-        await self._text_to_speech(text)
+        try:
+            if not self.is_joined(ctx.author):
+                await self.join(ctx.author)
+
+            await self._text_to_speech(f"{ctx.author.display_name}. "+text)
+        except Exception as e:
+            raise RuntimeError(e)
 
     @commands.command("disconnect")
     @commands.check(blockJam_mini)
     async def bye(self, ctx: Context):
         if not self.is_joined(ctx.author):
             return
+
         if self.voice.is_playing():
             raise
 
