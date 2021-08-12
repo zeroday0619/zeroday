@@ -64,7 +64,7 @@ class KakaoOpenAPI:
         """
         dat = []
         data = dat.append
-        for sent in kss.split_sentences(self.safe.suicide(source)):
+        for sent in kss.split_sentences(self.safe.suicide(source.replace("[", "").replace("]", "").replace("{", "").replace("}", ""))):
             self.logger.info(sent)
             data('<prosody rate="medium" volume="loud">' + sent + '<break/></prosody>')
 
