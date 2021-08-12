@@ -43,6 +43,7 @@ class TextToSpeech(commands.Cog):
             await self.voice.move_to(channel)
         except AttributeError as e:
             self.voice = await channel.connect()
+            raise RuntimeWarning(e)
             
     @Logger.set()
     async def _text_to_speech(self, source):
@@ -60,9 +61,13 @@ class TextToSpeech(commands.Cog):
     @commands.command(name="tts", aliases=["t", "-", "=", "#", "%", "*", "`"])
     @commands.check(blockJam_mini)
     async def talk(self, ctx: Context, *, text: str):
-        await self.join(ctx.author)
-        await self._text_to_speech(f"{ctx.author.display_name}님이 말합니다. "+text)
+        try:
+            if not self.is_joined(ctx.author):
+                await self.join(ctx.author)
 
+            await self._text_to_speech(f"{ctx.author.display_name}님이 말합니다.. "+text)
+        except Exception as e:
+            raise RuntimeError(e)
 
     @commands.command("disconnect")
     @commands.check(blockJam_mini)
