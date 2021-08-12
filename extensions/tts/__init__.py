@@ -34,7 +34,7 @@ class TextToSpeech(commands.Cog):
         if self.is_joined(member):
             raise RuntimeWarning(f"{member} is already joined.")
 
-        if type(self.voice) is VoiceProtocol:
+        if not type(self.voice) is VoiceProtocol:
             raise RuntimeWarning("Unknown Type")
 
         channel: VoiceChannel = member.voice.channel
