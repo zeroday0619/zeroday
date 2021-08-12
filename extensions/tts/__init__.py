@@ -43,7 +43,7 @@ class TextToSpeech(commands.Cog):
             self.voice = await channel.connect()
             
     @Logger.set()
-    async def _text_to_speech(self, source):
+    async def _text_to_speech(self, source, ctx: Context):
         rep = self.open_api.speak_data_generator(source)
         byt = await self.open_api.text_to_speech(rep)
         data = BytesIO(byt)
@@ -52,14 +52,19 @@ class TextToSpeech(commands.Cog):
             file.write(data.read())
             file.seek(0)
             if not self.voice.is_playing():
-                Logger.generate_log().info("x")
+                Logger.generate_log().info("O")
                 self.voice.play(PCMVolumeTransformer(FFmpegPCMAudio(source=file, pipe=True), volume=150), after=file.close())
+            else:
+                file.close()
+                Logger.generate_log().info("X")
+                await ctx.send(f"{ctx.author.display_name}님 죄송하지만 TTS 재생 중에 TTS 명령어를 사용할 수 없습니다.", delete_after=60)
+
 
     @commands.command(name="tts", aliases=["t", "-", "=", "#", "%", "*", "`"])
     @commands.check(blockJam_mini)
     async def talk(self, ctx: Context, *, text: str):
         await self.join(ctx.author)
-        await self._text_to_speech(f"{ctx.author.display_name}님이 말합니다. {text}")
+        await self._text_to_speech(f"{ctx.author.display_name}님의 메시지. {text}", ctx)
 
 
     @commands.command("disconnect")
