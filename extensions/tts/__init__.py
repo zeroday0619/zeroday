@@ -68,7 +68,7 @@ class TextToSpeech(commands.Cog):
             if not self.is_joined(ctx.author):
                 await self.join(ctx.author)
 
-            await self._text_to_speech(f"{ctx.author.display_name}. "+text)
+            await self._text_to_speech(f"{ctx.author.display_name}님이 말합니다. "+text)
         except Exception as e:
             raise RuntimeError(e)
 
