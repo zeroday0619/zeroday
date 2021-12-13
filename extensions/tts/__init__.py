@@ -113,18 +113,13 @@ class TextToSpeech(commands.Cog):
     async def _text_to_speech(self, source, ctx: Context):
         rep = self.open_api.speak_data_generator(source)
         byt = await self.open_api.text_to_speech(rep)
-        data = BytesIO(byt)
-        data.seek(0)
-        with TemporaryFile() as file:
-            file.write(data.read())
-            file.seek(0)
-            if not self.voice.is_playing():
-                Logger.generate_log().info("O")
-                self.voice.play(PCMVolumeTransformer(FFmpegPCMAudio(data, pipe=True, options='-loglevel "quiet"'), volume=150), after=file.close())
-            else:
-                file.close()
-                Logger.generate_log().info("X")
-                await ctx.send(f"{ctx.author.display_name}님 죄송하지만 TTS 재생 중에 TTS 명령어를 사용할 수 없습니다.", delete_after=60)
+
+        if not self.voice.is_playing():
+            Logger.generate_log().info("O")
+            self.voice.play(PCMVolumeTransformer(FFmpegPCMAudio(byt, pipe=True, options='-loglevel "quiet"'), volume=150))
+        else:
+            Logger.generate_log().info("X")
+            await ctx.send(f"{ctx.author.display_name}님 죄송하지만 TTS 재생 중에 TTS 명령어를 사용할 수 없습니다.", delete_after=60)
 
 
     @commands.command(name="tts", aliases=["t", "-", "=", "#", "%", "*", "`"])
