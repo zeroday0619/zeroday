@@ -126,7 +126,7 @@ class TextToSpeech(commands.Cog):
     @commands.check(blockJam_mini)
     async def talk(self, ctx: Context, *, text: str):
         await self.join(ctx.author)
-        await self._text_to_speech(f"{ctx.author.display_name}님의 메시지. {text}", ctx)
+        await self._text_to_speech(text, ctx)
 
 
     @commands.command("disconnect")
