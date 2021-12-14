@@ -8,7 +8,7 @@ from io import BytesIO
 from shlex import split
 from subprocess import PIPE, Popen
 from discord.opus import Encoder
-
+from app.ext.music.option import adult_filter
 from extensions.tts._kakao import KakaoOpenAPI
 from app.controller.logger import Logger
 from io import BytesIO
@@ -112,8 +112,14 @@ class TextToSpeech(commands.Cog):
     @Logger.set()
     async def _text_to_speech(self, source, ctx: Context):
         status = await self.open_api.safe.check(self.open_api.safe.cleanText(source))
+        st = await adult_filter(self.open_api.safe.cleanText(source))
         if not status:
-            rep = self.open_api.speak_data_generator(source)
+            if st == 1:
+                rep = self.open_api.speak_data_generator("전기통신사업법 및 정보통신망법에 따라 유해 단어를 차단하였습니다.")
+            elif st == 0:
+                rep = self.open_api.speak_data_generator(source)
+            else:
+                rep = self.open_api.speak_data_generator("시스템 에러")
         else:
             rep = self.open_api.speak_data_generator("전기통신사업법 및 정보통신망법에 따라 유해 단어를 차단하였습니다.")
 
