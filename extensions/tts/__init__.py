@@ -1,8 +1,13 @@
+import asyncio
 import discord
+
 from discord.ext import commands
-from discord import PCMVolumeTransformer, VoiceProtocol, Member
+from discord import PCMVolumeTransformer, Member, VoiceClient
 from discord.ext.commands import Context
 from discord.ext.commands import Bot
+
+from app.error.music import InvalidVoiceChannel
+from app.error.music import VoiceConnectionError
 
 from io import BytesIO
 from shlex import split
@@ -13,7 +18,7 @@ from extensions.tts._kakao import KakaoOpenAPI
 from app.controller.logger import Logger
 from io import BytesIO
 from tempfile import TemporaryFile
-from typing import Optional
+from typing import Dict, Optional
 
 
 class FFmpegPCMAudio(discord.AudioSource):
@@ -84,33 +89,71 @@ def blockJam_mini(ctx: Context):
 class TextToSpeech(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.voice = None
+        self.voice: Optional[Dict[int, VoiceClient]] = {}
         self.open_api = KakaoOpenAPI()
 
     @Logger.set()
-    def is_joined(self, member: Member):
+    def is_joined(self, ctx: Context, member: Member):
+        """
+        Checks if member is in a voice channel.
+        Args:
+            ctx: ApplicationContext
+            member: ctx.author or discord.Member
+        """
         if not member.voice:
             raise
 
-        return self.voice and self.voice.channel.id == member.voice.channel.id
+        return (
+            self.voice.get(ctx.author.guild.id)
+            and self.voice.get(ctx.author.guild.id) is not None
+            and self.voice.get(ctx.author.guild.id).channel.id
+            == member.voice.channel.id
+        )
 
     @Logger.set()
-    async def join(self, member: discord.Member):
+    async def join(self, ctx: Context):
         # Joining the already joined channel is a NOP.
-        if self.is_joined(member):
+        """Joins a voice channel."""
+        if self.is_joined(ctx, ctx.author):
             return
-
-        channel = member.voice.channel
         try:
-            if self.voice.is_playing():
-                raise
-
-            await self.voice.move_to(channel)
+            channel = ctx.author.guild._voice_states[ctx.author.id].channel
         except AttributeError:
-            self.voice = await channel.connect()
+            await ctx.respond(
+                content="'Voice channel'에 연결하지 못하였습니다.\n 유효한 'Voice channel'에 자신이 들어와 있는지 확인바랍니다."
+            )
+            raise InvalidVoiceChannel(message="'Voice channel'에 연결하지 못하였습니다.")
+        vc = ctx.guild.voice_client
+        if vc:
+            if vc.channel.id == channel.id:
+                return
+            try:
+                _voice = self.voice[ctx.author.guild.id]
+                await _voice.move_to(channel)
+            except asyncio.TimeoutError:
+                await ctx.respond(
+                    content=f"Moving to channel: <{str(channel)}> timed out"
+                )
+                raise VoiceConnectionError(
+                    f"Moving to channel: <{str(channel)}> timed out"
+                )
+        else:
+            try:
+                self.voice[ctx.author.guild.id] = await channel.connect()
+            except asyncio.TimeoutError:
+                await ctx.respond(
+                    content=f"Connecting to channel: <{str(channel)}> timed out"
+                )
+                raise VoiceConnectionError(
+                    message=f"Connecting to channel: <{str(channel)}> timed out"
+                )
             
     @Logger.set()
     async def _text_to_speech(self, source, ctx: Context):
+        vc = ctx.guild.voice_client
+        if not vc:
+            await ctx.invoke(self.join)
+
         status = await self.open_api.safe.check(self.open_api.safe.cleanText(source))
         st = await adult_filter(self.open_api.safe.cleanText(source), loop=self.bot.loop)
         if not status:
@@ -125,9 +168,20 @@ class TextToSpeech(commands.Cog):
 
         byt = await self.open_api.text_to_speech(rep)
 
-        if not self.voice.is_playing():
+        if not self.voice[ctx.author.guild.id].is_playing():
             Logger.generate_log().info("O")
-            self.voice.play(PCMVolumeTransformer(FFmpegPCMAudio(byt, pipe=True, options='-loglevel "quiet"'), volume=150))
+            self.voice[
+                ctx.author.guild.id
+            ].play(
+                PCMVolumeTransformer(
+                    FFmpegPCMAudio(
+                        byt, 
+                        pipe=True, 
+                        options='-loglevel "quiet"'
+                        ), 
+                    volume=150
+                )
+            )
         else:
             Logger.generate_log().info("X")
             await ctx.send(f"{ctx.author.display_name}님 죄송하지만 TTS 재생 중에 TTS 명령어를 사용할 수 없습니다.", delete_after=60)
@@ -136,21 +190,18 @@ class TextToSpeech(commands.Cog):
     @commands.command(name="tts", aliases=["t", "-", "=", "#", "%", "*", "`"])
     @commands.check(blockJam_mini)
     async def talk(self, ctx: Context, *, text: str):
-        await self.join(ctx.author)
+        await self.join(ctx)
         await self._text_to_speech(text, ctx)
 
 
     @commands.command("disconnect")
     @commands.check(blockJam_mini)
     async def bye(self, ctx: Context):
-        if not self.is_joined(ctx.author):
+        """Disconnects from voice channel."""
+        if not self.voice.get(ctx.author.guild.id):
             return
-
-        if self.voice.is_playing():
-            raise
-
-        await self.voice.disconnect()
-        self.voice = None
+        await self.voice[ctx.author.guild.id].disconnect()
+        del self.voice[ctx.author.guild.id]
 
 
 def setup(bot: Bot):
