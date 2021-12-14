@@ -1,5 +1,6 @@
 import aiohttp
 import kss
+import discord
 from app.module import RegexFilter
 from app.controller.logger import Logger
 from app.controller import kakao_rest_api_key
@@ -47,6 +48,22 @@ class KakaoOpenAPI:
         else:
             raise Exception("알수없는 오류가 발생하였습니다.")
 
+    def EmbedSaftySearch(self, data):
+        embed = discord.Embed(
+            title="불법·유해 미디어에 대한 차단 안내",
+            url="http://warning.or.kr/",
+            description=f"```ini\n검열 시스템 3.0~```",
+            color=discord.Color.blurple(),
+        ).set_image(
+            url="https://cdn.zeroday0619.dev/img/a943b980d720c07de45b2ac88edaa116.jpg"
+        ).add_field(
+            name="Blocked words", value=str(data.strip()), inline=False
+        ).set_footer(
+            text="Safe Search | Version: alpha 1.0.0",
+            icon_url="https://cdn.zeroday0619.dev/img/cc5bb239a7518bfcd02c9dd2d4e6bfe0.jpg"
+        )
+        return embed
+
     @Logger.set()
     def request_header_generator(self) -> dict:
         headers = {
@@ -62,9 +79,10 @@ class KakaoOpenAPI:
         :param source: 음성합성할 문장이나 단어
         :return: ssml
         """
+        sc = source.replace("[", "").replace("]", "").replace("{", "").replace("}", "").replace("(", "").replace(")", "")
         dat = []
         data = dat.append
-        for sent in kss.split_sentences(self.safe.suicide(source.replace("[", "").replace("]", "").replace("{", "").replace("}", "").replace("(", "").replace(")", ""))):
+        for sent in kss.split_sentences(self.safe.suicide(sc)):
             self.logger.info(sent)
             data('<prosody rate="medium" volume="loud">' + sent + '<break/></prosody>')
 

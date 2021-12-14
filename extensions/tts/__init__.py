@@ -111,7 +111,12 @@ class TextToSpeech(commands.Cog):
             
     @Logger.set()
     async def _text_to_speech(self, source, ctx: Context):
-        rep = self.open_api.speak_data_generator(source)
+        status = await self.open_api.safe.check(self.open_api.safe.cleanText(source))
+        if status:
+            rep = self.open_api.speak_data_generator(source)
+        else:
+            rep = self.open_api.speak_data_generator("전기통신사업법 및 정보통신망법에 따라 유해 단어를 차단하였습니다.")
+
         byt = await self.open_api.text_to_speech(rep)
 
         if not self.voice.is_playing():
