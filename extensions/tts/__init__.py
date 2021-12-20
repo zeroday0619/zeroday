@@ -180,7 +180,7 @@ class TextToSpeech(commands.Cog):
             if st == 1:
                 rep = self.open_api.speak_data_generator("전기통신사업법 및 정보통신망법에 따라 유해 단어를 차단하였습니다.")
             elif st == 0:
-                if await cls.regex_filter(ctx=ctx, self.open_api.safe.cleanText(source)):
+                if await self.regex_filter(ctx=ctx, source=self.open_api.safe.cleanText(source)):
                     rep = self.open_api.speak_data_generator("전기통신사업법 및 정보통신망법에 따라 유해 단어를 차단하였습니다.")
                 else:
                     rep = self.open_api.speak_data_generator(source)
