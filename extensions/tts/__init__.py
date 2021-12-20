@@ -19,7 +19,7 @@ from app.controller.logger import Logger
 from io import BytesIO
 from tempfile import TemporaryFile
 from typing import Dict, Optional
-
+from app.module import RegexFilter
 
 class FFmpegPCMAudio(discord.AudioSource):
     """Reimplementation of discord.FFmpegPCMAudio with source: bytes support
@@ -91,7 +91,27 @@ class TextToSpeech(commands.Cog):
         self.bot = bot
         self.voice: Optional[Dict[int, VoiceClient]] = {}
         self.open_api = KakaoOpenAPI()
-
+        
+    @classmethod
+    @Logger.set()
+    async def regex_filter(cls, ctx: Context, source: str):
+        tool = RegexFilter()
+        try:
+            if await tool.check(source=source):
+                cls.logger.info(f"차단: {source}")
+                try:
+                    embed = EmbedSaftySearch(data=str(source))
+                    await ctx.send(embed=embed)
+                except Exception as e:
+                    cls.logger.debug(msg=e)
+                    pass
+                return True
+            else:
+                return False
+        except Exception as e:
+            cls.logger.debug(msg=e)
+            return False
+        
     @Logger.set()
     def is_joined(self, ctx: Context, member: Member):
         """
@@ -160,7 +180,10 @@ class TextToSpeech(commands.Cog):
             if st == 1:
                 rep = self.open_api.speak_data_generator("전기통신사업법 및 정보통신망법에 따라 유해 단어를 차단하였습니다.")
             elif st == 0:
-                rep = self.open_api.speak_data_generator(source)
+                if await cls.regex_filter(ctx=ctx, source=data['title']):
+                    rep = self.open_api.speak_data_generator("전기통신사업법 및 정보통신망법에 따라 유해 단어를 차단하였습니다.")
+                else:
+                    rep = self.open_api.speak_data_generator(source)
             else:
                 rep = self.open_api.speak_data_generator("시스템 에러")
         else:
