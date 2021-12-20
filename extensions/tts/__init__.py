@@ -99,12 +99,6 @@ class TextToSpeech(commands.Cog):
         try:
             if await tool.check(source=source):
                 cls.logger.info(f"차단: {source}")
-                try:
-                    embed = EmbedSaftySearch(data=str(source))
-                    await ctx.send(embed=embed)
-                except Exception as e:
-                    cls.logger.debug(msg=e)
-                    pass
                 return True
             else:
                 return False
